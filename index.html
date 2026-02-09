@@ -13,7 +13,7 @@
         }
         * { box-sizing: border-box; }
         
-        /* Removed background:#000 to prevent covering the video */
+        /* Transparent body to show video */
         body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background: transparent; font-family: 'Courier New', monospace; color: var(--cyan); }
         
         /* --- FULL SCREEN BACKGROUND VIDEO --- */
@@ -24,7 +24,7 @@
             width: auto; height: auto; 
             transform: translate(-50%, -50%);
             object-fit: cover; 
-            z-index: -10; /* Pushed further back */
+            z-index: -10; 
             filter: brightness(0.6) contrast(1.2); 
         }
 
@@ -57,9 +57,9 @@
         #app-wrapper {
             width: 100%; padding: 20px 5%; display: flex; flex-wrap: wrap; justify-content: center; 
             gap: 35px; overflow-y: auto; max-height: 45vh;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none; 
         }
-        #app-wrapper::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+        #app-wrapper::-webkit-scrollbar { display: none; } 
         
         .app-icon { 
             width: 110px; display: flex; flex-direction: column; align-items: center; 
@@ -167,20 +167,29 @@
         vid.play().catch(e => console.log("User interaction required for video audio/play"));
     });
 
+    // --- INTEGRATED MESSAGE LISTENER FOR NEXUS HUB ---
+    window.addEventListener('message', (event) => {
+        // This listens for 'spawn_frame' commands sent from apps (like Nexus Hub) running inside iframes
+        if (event.data && (event.data.type === 'spawn_frame' || event.data.type === 'load_site')) {
+            const { url, name } = event.data;
+            // Spawn the window
+            spawnFrame(url, name || "EXTERNAL LINK", '#00f2ff'); 
+            // Also log it to history
+            logHistory(name || "EXTERNAL LINK", url, '#00f2ff');
+        }
+    });
+
     // GLOBAL CLICK LISTENER: "Minimize on Outside Click"
     document.addEventListener('click', (e) => {
         const historyPanel = document.getElementById('history-panel');
         const historyTrigger = document.getElementById('history-trigger');
         
-        // 1. Close History if clicking outside
         if (historyPanel.classList.contains('open')) {
             if (!historyPanel.contains(e.target) && !historyTrigger.contains(e.target)) {
                 historyPanel.classList.remove('open');
             }
         }
 
-        // 2. Minimize Windows if clicking "Empty Desktop"
-        // We define "Interface" as: Header, Dock, Any App Icon, or Any Open Window (Holoframe)
         const isInterface = e.target.closest('#system-header') || 
                             e.target.closest('.dock') || 
                             e.target.closest('.app-icon') || 
@@ -189,7 +198,6 @@
                             e.target.closest('#history-trigger');
 
         if (!isInterface) {
-            // Clicked background -> Minimize all active threads
             minimizeAllThreads();
         }
     });
@@ -225,7 +233,7 @@
         div.className = 'app-icon';
         div.innerHTML = `<div class="icon-box" style="border-color:${app.color}">${app.icon}</div><span style="font-size:10px; color:${app.color}">${app.name}</span>`;
         div.onclick = (e) => { 
-            e.stopPropagation(); // Prevent immediate minimization
+            e.stopPropagation(); 
             spawnFrame(app.url, app.name, app.color); 
             logHistory(app.name, app.url, app.color); 
         };
@@ -264,9 +272,8 @@
         
         const el = document.getElementById(id);
         makeDraggable(el);
-        // Focus when clicked inside
         el.onmousedown = (e) => {
-            e.stopPropagation(); // Stop click from hitting background
+            e.stopPropagation(); 
             focusThread(id);
         };
         focusThread(id);
