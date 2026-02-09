@@ -7,25 +7,28 @@
     <style>
         :root { 
             --cyan: #00f2ff; 
-            --glass: rgba(0, 15, 25, 0.7); 
+            --glass: rgba(0, 15, 25, 0.65); 
             --border: rgba(0, 242, 255, 0.4); 
             --bloom: 0 0 20px rgba(0, 242, 255, 0.5);
         }
         * { box-sizing: border-box; }
         body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; font-family: 'Courier New', monospace; color: var(--cyan); }
         
+        /* --- DYNAMIC BACKGROUND --- */
         #bg-video { 
             position: fixed; inset: 0; width: 100%; height: 100%; 
             object-fit: cover; z-index: -2; 
-            filter: brightness(0.4) contrast(1.2); 
+            filter: brightness(0.4) contrast(1.1); 
         }
 
+        /* Cinematic Overlay */
         body::before {
             content: ""; position: fixed; inset: 0;
-            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.8) 100%);
+            background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.85) 100%);
             z-index: -1; pointer-events: none;
         }
 
+        /* System Header */
         #system-header {
             width: 100%; padding: 25px; display: flex; flex-direction: column; align-items: center; gap: 20px;
             background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index: 100;
@@ -42,15 +45,16 @@
             font-family: inherit; text-align: center; letter-spacing: 2px;
             transition: 0.3s;
         }
-        .search-bar:focus {
-            box-shadow: 0 0 30px var(--cyan);
-            border-color: #fff;
-        }
+        .search-bar:focus { box-shadow: 0 0 30px var(--cyan); border-color: #fff; }
 
+        /* App Grid */
         #app-wrapper {
             width: 100%; padding: 20px 5%; display: flex; flex-wrap: wrap; justify-content: center; 
             gap: 35px; overflow-y: auto; max-height: 45vh;
         }
+        #app-wrapper::-webkit-scrollbar { width: 4px; }
+        #app-wrapper::-webkit-scrollbar-thumb { background: var(--border); }
+
         .app-icon { 
             width: 110px; display: flex; flex-direction: column; align-items: center; 
             cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
@@ -62,8 +66,9 @@
             background: rgba(0,0,0,0.7); margin-bottom: 10px;
             backdrop-filter: blur(5px); transition: 0.3s;
         }
-        .app-icon:hover .icon-box { background: var(--cyan); border-color: #fff; color: #000; }
+        .app-icon:hover .icon-box { background: var(--cyan); border-color: #fff; color: #000; box-shadow: var(--bloom); }
 
+        /* Holoframes */
         #desktop-manager { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
         .holoframe {
             position: absolute; top: 15%; left: 15%; width: 75%; height: 70%; 
@@ -72,46 +77,59 @@
             box-shadow: 0 0 60px rgba(0, 242, 255, 0.25); pointer-events: auto;
             resize: both; overflow: hidden; transition: height 0.3s;
         }
-        .holoframe.minimized { height: 50px !important; overflow: hidden; }
-        .holoframe.minimized .iframe-wrapper { display: none; }
         .holo-header {
             padding: 15px 25px; border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
             background: rgba(0, 242, 255, 0.1); cursor: move;
-            font-weight: bold; letter-spacing: 2px;
         }
-        .controls { display: flex; gap: 15px; font-size: 11px; }
         .iframe-wrapper { position: relative; height: calc(100% - 50px); background: #000; }
         iframe { width: 100%; height: 100%; border: none; }
 
+        /* History Panel & Scrollbar */
         #history-panel {
             position: fixed; top: 0; left: -320px; width: 320px; height: 100%;
-            background: rgba(5, 10, 15, 0.95); border-right: 1px solid var(--border);
-            backdrop-filter: blur(25px); z-index: 3000; transition: 0.6s cubic-bezier(0.85, 0, 0.15, 1);
+            background: rgba(5, 10, 15, 0.6); 
+            border-right: 1px solid var(--border);
+            backdrop-filter: blur(25px); z-index: 3000; 
+            transition: 0.6s cubic-bezier(0.85, 0, 0.15, 1);
         }
         #history-panel.open { left: 0; box-shadow: 20px 0 50px rgba(0,0,0,0.8); }
-        .history-header { padding: 40px 25px; font-size: 16px; font-weight: bold; letter-spacing: 5px; color: var(--cyan); border-bottom: 1px solid var(--border); text-shadow: var(--bloom); }
-        #history-list { padding: 10px; overflow-y: auto; height: calc(100% - 80px); }
+        .history-header { 
+            padding: 40px 25px; font-size: 16px; font-weight: bold; letter-spacing: 5px; 
+            color: var(--cyan); border-bottom: 1px solid var(--border); 
+            text-shadow: var(--bloom); background: rgba(0,0,0,0.4);
+        }
+        #history-list { padding: 10px; overflow-y: auto; height: calc(100% - 100px); }
         
+        /* Custom History Scrollbar */
+        #history-list::-webkit-scrollbar { width: 6px; } 
+        #history-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); } 
+        #history-list::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 3px; }
+
+        .history-entry {
+            background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0,242,255,0.1);
+            margin-bottom: 8px; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s;
+        }
+        .history-entry:hover { background: rgba(0, 242, 255, 0.15); border-color: var(--cyan); }
+
         #history-trigger {
             position: fixed; top: 50%; left: 0; transform: translateY(-50%);
             width: 25px; height: 80px; background: var(--glass);
             border: 1px solid var(--border); border-left: none;
             border-radius: 0 15px 15px 0; cursor: pointer; z-index: 2900;
             display: flex; align-items: center; justify-content: center; 
-            transition: 0.3s; color: var(--cyan); font-weight: bold;
+            transition: 0.3s; color: var(--cyan); font-size: 20px;
         }
         #history-trigger:hover { background: var(--cyan); color: #000; box-shadow: var(--bloom); }
 
+        /* Dock */
         .dock {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             display: flex; gap: 25px; padding: 15px 40px;
             background: rgba(0,0,0,0.8); border: 1px solid var(--border);
             border-radius: 50px; backdrop-filter: blur(15px); z-index: 500;
             box-shadow: var(--bloom);
-            animation: pulse 4s infinite alternate;
         }
-        @keyframes pulse { from { box-shadow: var(--bloom); } to { box-shadow: 0 0 30px rgba(0,242,255,0.3); } }
         .dock-btn { cursor:pointer; font-weight:bold; font-size: 12px; letter-spacing: 2px; transition: 0.3s; }
         .dock-btn:hover { color: #fff; text-shadow: 0 0 10px var(--cyan); }
     </style>
@@ -128,7 +146,6 @@
             <div class="meta-item">CHRONO: <span id="cur-time">00:00:00</span></div>
             <div class="meta-item">STATUS: <span id="cur-traffic">APEX ACTIVE</span></div>
         </div>
-        
         <div class="search-container">
             <form id="neural-search-form" onsubmit="executeNeuralSearch(event)">
                 <input type="text" id="search-input" class="search-bar" placeholder="EXECUTE NEURAL COMMAND...">
@@ -143,7 +160,7 @@
         <div class="history-header">HERITAGE LEDGER</div>
         <div id="history-list"></div>
     </div>
-    <div id="history-trigger" onclick="toggleHistory(event)">&#x203A;</div>
+    <div id="history-trigger" onclick="toggleHistory(event)">☰</div>
 
     <div class="dock">
         <div class="dock-btn" onclick="spawnFrame('https://artemis-hub.vercel.app/', 'NEXUS HUB', '#00f2ff')">[ ACCESS NEXUS ]</div>
@@ -152,7 +169,7 @@
 <script>
     const PROXY = "https://artemis-proxy.onrender.com/";
     let threads = [];
-    let history = JSON.parse(localStorage.getItem('artemis_history') || "[]");
+    let historyData = JSON.parse(localStorage.getItem('artemis_history') || "[]");
 
     const apps = [
         { name: "R.E.M.", url: "https://rem-psi-mauve.vercel.app/", color: "#bc13fe", icon: "👁️" },
@@ -174,14 +191,8 @@
     apps.forEach(app => {
         const div = document.createElement('div');
         div.className = 'app-icon';
-        div.innerHTML = `
-            <div class="icon-box" style="border-color:${app.color}; box-shadow: 0 0 15px ${app.color}66;">${app.icon}</div>
-            <span style="font-size:10px; color:${app.color}; font-weight:bold; letter-spacing:1px;">${app.name}</span>
-        `;
-        div.onclick = () => {
-            spawnFrame(app.url, app.name, app.color);
-            logHistory(app.name, app.url, app.color);
-        };
+        div.innerHTML = `<div class="icon-box" style="border-color:${app.color}">${app.icon}</div><span style="font-size:10px; color:${app.color}">${app.name}</span>`;
+        div.onclick = () => { spawnFrame(app.url, app.name, app.color); logHistory(app.name, app.url, app.color); };
         wrapper.appendChild(div);
     });
 
@@ -191,81 +202,64 @@
             <div class="holoframe" id="${id}" style="border-color:${color}; z-index:${threads.length + 1000}">
                 <div class="holo-header" style="background:${color}11">
                     <span style="color:${color}">${name}</span>
-                    <div class="controls">
-                        <div onclick="this.closest('.holoframe').classList.toggle('minimized')" style="cursor:pointer;">[MIN]</div>
-                        <div onclick="terminateThread('${id}')" style="cursor:pointer; color:#ff3366;">[TERMINATE]</div>
-                    </div>
+                    <div style="cursor:pointer; color:#ff3366;" onclick="terminateThread('${id}')">[X]</div>
                 </div>
                 <div class="iframe-wrapper">
                     <iframe id="iframe-${id}" src="${url}"></iframe>
                 </div>
-            </div>
-        `;
+            </div>`;
         document.getElementById('desktop-manager').insertAdjacentHTML('beforeend', markup);
-        threads.push({ id, name, color });
+        threads.push({ id });
+        
+        const iframe = document.getElementById(`iframe-${id}`);
+        iframe.onerror = () => { 
+            iframe.srcdoc = `<body style="margin:0;padding:40px;background:#000;color:#ff3366;font-family:monospace;text-align:center;"><h2>ACCESS DENIED</h2><p>Proxy or site blocked this connection.</p></body>`; 
+        };
+
         makeDraggable(document.getElementById(id));
     }
 
     function makeDraggable(el) {
         let isDragging = false, startX, startY;
-        const header = el.querySelector('.holo-header');
-        header.onmousedown = e => {
-            isDragging = true;
-            startX = e.clientX - el.offsetLeft;
-            startY = e.clientY - el.offsetTop;
+        el.querySelector('.holo-header').onmousedown = e => {
+            isDragging = true; startX = e.clientX - el.offsetLeft; startY = e.clientY - el.offsetTop;
             e.preventDefault();
         };
-        document.onmousemove = e => {
-            if (isDragging) {
-                el.style.left = (e.clientX - startX) + 'px';
-                el.style.top = (e.clientY - startY) + 'px';
-            }
-        };
+        document.onmousemove = e => { if (isDragging) { el.style.left = (e.clientX - startX) + 'px'; el.style.top = (e.clientY - startY) + 'px'; } };
         document.onmouseup = () => isDragging = false;
     }
 
-    function terminateThread(id) {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-        threads = threads.filter(t => t.id !== id);
+    function terminateThread(id) { document.getElementById(id).remove(); threads = threads.filter(t => t.id !== id); }
+    
+    function toggleHistory(e) { 
+        e.stopPropagation(); 
+        document.getElementById('history-panel').classList.toggle('open'); 
     }
 
-    function toggleHistory(e) {
-        e.stopPropagation();
-        document.getElementById('history-panel').classList.toggle('open');
-    }
-
-    // Close panel on outside click
     document.addEventListener('click', function(e) {
         const panel = document.getElementById('history-panel');
         const trigger = document.getElementById('history-trigger');
-        if (panel.classList.contains('open') &&
-            !panel.contains(e.target) &&
-            !trigger.contains(e.target)) {
+        if (panel.classList.contains('open') && !panel.contains(e.target) && !trigger.contains(e.target)) {
             panel.classList.remove('open');
         }
     });
-
+    
     function logHistory(name, url, color) {
-        const entry = { name, url, color, timestamp: new Date().toLocaleTimeString() };
-        history.unshift(entry);
-        if (history.length > 20) history.pop();
-        localStorage.setItem('artemis_history', JSON.stringify(history));
+        historyData.unshift({ name, url, color, timestamp: new Date().toLocaleTimeString() });
+        if (historyData.length > 20) historyData.pop();
+        localStorage.setItem('artemis_history', JSON.stringify(historyData));
         renderHistory();
     }
 
     function renderHistory() {
         const list = document.getElementById('history-list');
-        if (!list) return;
         list.innerHTML = '';
-        history.forEach(entry => {
-            const item = document.createElement('div');
-            item.style.padding = '12px';
-            item.style.borderBottom = '1px solid rgba(0,242,255,0.1)';
-            item.style.cursor = 'pointer';
-            item.innerHTML = `<div style="font-size:11px;">${entry.name}</div><div style="font-size:9px;opacity:0.6;">${entry.timestamp}</div>`;
-            item.onclick = () => spawnFrame(entry.url, entry.name, entry.color);
-            list.appendChild(item);
+        historyData.forEach(entry => {
+            const div = document.createElement('div');
+            div.className = 'history-entry';
+            div.innerHTML = `<div style="font-size:11px; color:${entry.color}">${entry.name}</div><div style="font-size:9px; opacity:0.5;">${entry.timestamp}</div>`;
+            div.onclick = () => spawnFrame(entry.url, entry.name, entry.color);
+            list.appendChild(div);
         });
     }
 
@@ -274,22 +268,21 @@
         document.getElementById('cur-date').innerText = now.toLocaleDateString();
         document.getElementById('cur-time').innerText = now.toLocaleTimeString();
     }
+    
     setInterval(updateStats, 1000);
+    renderHistory();
     updateStats();
 
     function executeNeuralSearch(e) {
         e.preventDefault();
         const q = document.getElementById('search-input').value.trim();
         if (q) {
-            const url = PROXY + `https://www.google.com/search?q=${encodeURIComponent(q)}&igu=1`;
-            spawnFrame(url, q.toUpperCase(), "#fff");
-            logHistory(q.toUpperCase(), `https://www.google.com/search?q=${encodeURIComponent(q)}`, "#fff");
+            const fullUrl = `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+            spawnFrame(PROXY + fullUrl + `&igu=1`, q.toUpperCase(), "#fff");
+            logHistory(q.toUpperCase(), fullUrl, "#fff");
             document.getElementById('search-input').value = '';
         }
     }
-
-    // Initial render
-    renderHistory();
 </script>
 </body>
 </html>
