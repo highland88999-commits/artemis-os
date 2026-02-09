@@ -12,32 +12,34 @@
             --bloom: 0 0 20px rgba(0, 242, 255, 0.5);
         }
         * { box-sizing: border-box; }
-        body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; font-family: 'Courier New', monospace; color: var(--cyan); }
+        
+        /* Removed background:#000 to prevent covering the video */
+        body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background: transparent; font-family: 'Courier New', monospace; color: var(--cyan); }
         
         /* --- FULL SCREEN BACKGROUND VIDEO --- */
         #bg-video { 
             position: fixed; 
-            inset: 0; 
-            width: 100vw; 
-            height: 100vh; 
+            top: 50%; left: 50%; 
+            min-width: 100%; min-height: 100%; 
+            width: auto; height: auto; 
+            transform: translate(-50%, -50%);
             object-fit: cover; 
-            z-index: -2; 
-            filter: brightness(0.5) contrast(1.2); 
+            z-index: -10; /* Pushed further back */
+            filter: brightness(0.6) contrast(1.2); 
         }
 
-        /* Overlay to ensure UI readability */
-        body::before {
+        /* Overlay for text readability */
+        body::after {
             content: ""; position: fixed; inset: 0;
-            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%),
-                        linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 100%);
-            z-index: -1; pointer-events: none;
+            background: radial-gradient(circle at center, transparent 10%, rgba(0,0,0,0.6) 90%);
+            z-index: -5; pointer-events: none;
         }
 
         /* System Header */
         #system-header {
             width: 100%; padding: 25px; display: flex; flex-direction: column; align-items: center; gap: 20px;
             background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 100;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(2px);
         }
         .meta-row { display: flex; gap: 40px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-shadow: var(--bloom); }
         .meta-item span { color: #fff; font-weight: bold; }
@@ -55,7 +57,10 @@
         #app-wrapper {
             width: 100%; padding: 20px 5%; display: flex; flex-wrap: wrap; justify-content: center; 
             gap: 35px; overflow-y: auto; max-height: 45vh;
+            scrollbar-width: none; /* Firefox */
         }
+        #app-wrapper::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+        
         .app-icon { 
             width: 110px; display: flex; flex-direction: column; align-items: center; 
             cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
@@ -75,10 +80,11 @@
             background: var(--glass); backdrop-filter: blur(30px);
             box-shadow: 0 0 60px rgba(0, 242, 255, 0.25); pointer-events: auto;
             overflow: hidden; display: flex; flex-direction: column;
+            transition: opacity 0.2s, transform 0.2s;
         }
         .holo-header {
             padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border); cursor: move;
+            border-bottom: 1px solid var(--border); cursor: move; user-select: none;
         }
         .window-controls { display: flex; align-items: center; flex: 1; }
         .internal-address-bar { 
@@ -98,7 +104,7 @@
         #history-panel {
             position: fixed; top: 0; left: -320px; width: 320px; height: 100%;
             background: rgba(5, 10, 15, 0.95); border-right: 1px solid var(--border);
-            backdrop-filter: blur(25px); z-index: 3000; transition: 0.6s;
+            backdrop-filter: blur(25px); z-index: 3000; transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #history-panel.open { left: 0; }
         #history-trigger {
@@ -106,6 +112,7 @@
             width: 25px; height: 80px; background: var(--glass); border: 1px solid var(--border);
             border-radius: 0 15px 15px 0; cursor: pointer; z-index: 2900; 
             display: flex; align-items: center; justify-content: center; color: var(--cyan);
+            user-select: none;
         }
 
         .dock {
@@ -154,6 +161,48 @@
     let threads = [];
     let historyData = JSON.parse(localStorage.getItem('artemis_history') || "[]");
 
+    // Force Video Play
+    document.addEventListener('DOMContentLoaded', () => {
+        const vid = document.getElementById('bg-video');
+        vid.play().catch(e => console.log("User interaction required for video audio/play"));
+    });
+
+    // GLOBAL CLICK LISTENER: "Minimize on Outside Click"
+    document.addEventListener('click', (e) => {
+        const historyPanel = document.getElementById('history-panel');
+        const historyTrigger = document.getElementById('history-trigger');
+        
+        // 1. Close History if clicking outside
+        if (historyPanel.classList.contains('open')) {
+            if (!historyPanel.contains(e.target) && !historyTrigger.contains(e.target)) {
+                historyPanel.classList.remove('open');
+            }
+        }
+
+        // 2. Minimize Windows if clicking "Empty Desktop"
+        // We define "Interface" as: Header, Dock, Any App Icon, or Any Open Window (Holoframe)
+        const isInterface = e.target.closest('#system-header') || 
+                            e.target.closest('.dock') || 
+                            e.target.closest('.app-icon') || 
+                            e.target.closest('.holoframe') ||
+                            e.target.closest('#history-panel') ||
+                            e.target.closest('#history-trigger');
+
+        if (!isInterface) {
+            // Clicked background -> Minimize all active threads
+            minimizeAllThreads();
+        }
+    });
+
+    function minimizeAllThreads() {
+        threads.forEach(t => {
+            const el = document.getElementById(t.id);
+            if (el && el.style.display !== 'none') {
+                minimizeThread(t.id, t.name);
+            }
+        });
+    }
+
     const apps = [
         { name: "R.E.M.", url: "https://rem-psi-mauve.vercel.app/", color: "#bc13fe", icon: "👁️" },
         { name: "Aetheris", url: "https://aetheris-business-model.vercel.app/", color: "#00f2ff", icon: "🔱" },
@@ -175,7 +224,11 @@
         const div = document.createElement('div');
         div.className = 'app-icon';
         div.innerHTML = `<div class="icon-box" style="border-color:${app.color}">${app.icon}</div><span style="font-size:10px; color:${app.color}">${app.name}</span>`;
-        div.onclick = () => { spawnFrame(app.url, app.name, app.color); logHistory(app.name, app.url, app.color); };
+        div.onclick = (e) => { 
+            e.stopPropagation(); // Prevent immediate minimization
+            spawnFrame(app.url, app.name, app.color); 
+            logHistory(app.name, app.url, app.color); 
+        };
         wrapper.appendChild(div);
     });
 
@@ -211,7 +264,11 @@
         
         const el = document.getElementById(id);
         makeDraggable(el);
-        el.onmousedown = () => focusThread(id);
+        // Focus when clicked inside
+        el.onmousedown = (e) => {
+            e.stopPropagation(); // Stop click from hitting background
+            focusThread(id);
+        };
         focusThread(id);
     }
 
@@ -234,6 +291,7 @@
 
     function minimizeThread(id, name) {
         const el = document.getElementById(id);
+        if(!el) return;
         el.style.display = 'none';
         
         if (!document.querySelector(`[data-restore="${id}"]`)) {
@@ -242,7 +300,8 @@
             btn.className = 'dock-btn';
             btn.setAttribute('data-restore', id);
             btn.innerText = `[ ${name} ]`;
-            btn.onclick = () => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
                 el.style.display = 'flex';
                 focusThread(id);
                 btn.remove();
@@ -266,7 +325,7 @@
         let isDragging = false, startX, startY;
         const header = el.querySelector('.holo-header');
         header.onmousedown = e => {
-            if(e.target.tagName === 'INPUT') return;
+            if(e.target.tagName === 'INPUT' || e.target.classList.contains('nav-btn') || e.target.classList.contains('min-btn') || e.target.classList.contains('close-btn')) return;
             isDragging = true; 
             startX = e.clientX - el.offsetLeft; 
             startY = e.clientY - el.offsetTop;
@@ -309,7 +368,10 @@
             const div = document.createElement('div');
             div.style = `padding:12px; margin-bottom:5px; border:1px solid ${entry.color}33; cursor:pointer; background:rgba(255,255,255,0.02); border-radius:4px;`;
             div.innerHTML = `<div style="font-size:11px; color:${entry.color}">${entry.name}</div><div style="font-size:9px; opacity:0.4;">${entry.timestamp}</div>`;
-            div.onclick = () => spawnFrame(entry.url, entry.name, entry.color);
+            div.onclick = (e) => { 
+                e.stopPropagation();
+                spawnFrame(entry.url, entry.name, entry.color);
+            };
             list.appendChild(div);
         });
     }
