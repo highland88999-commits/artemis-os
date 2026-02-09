@@ -3,87 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARTEMIS • SILVER LEDGER</title>
+    <title>ARTEMIS • APEX HERITAGE</title>
     <style>
-        :root { 
-            --cyan: #00f2ff; 
-            --glass: rgba(0, 15, 25, 0.85); 
-            --border: rgba(0, 242, 255, 0.3);
-            --silver: #c0c0c0;
-            --silver-bloom: rgba(255, 255, 255, 0.15);
-        }
+        :root { --cyan: #00f2ff; --glass: rgba(0, 15, 25, 0.85); --border: rgba(0, 242, 255, 0.3); }
         * { box-sizing: border-box; }
         body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; font-family: 'Courier New', monospace; color: var(--cyan); }
         
         #bg-video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; filter: brightness(0.3); }
 
-        /* --- SILVER LEDGER PANEL --- */
-        #history-panel {
-            position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
-            background: rgba(10, 10, 10, 0.98); border-right: 1px solid var(--silver);
-            backdrop-filter: blur(25px); z-index: 3000; transition: 0.5s cubic-bezier(0.85, 0, 0.15, 1);
-            box-shadow: 10px 0 30px var(--silver-bloom);
-        }
-        #history-panel.open { left: 0; }
-
-        .history-header {
-            padding: 30px 20px; font-size: 14px; font-weight: bold; letter-spacing: 4px;
-            color: #fff; text-shadow: 0 0 15px #fff;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .history-list { padding: 10px; height: calc(100% - 150px); overflow-y: auto; }
-        .history-item {
-            padding: 15px; margin-bottom: 10px; border: 1px solid rgba(192, 192, 192, 0.1);
-            cursor: pointer; transition: 0.3s; background: rgba(255, 255, 255, 0.02);
-        }
-        .history-item:hover {
-            background: rgba(255, 255, 255, 0.1); border-color: #fff;
-            box-shadow: 0 0 15px var(--silver-bloom);
-        }
-
-        /* --- SYSTEM HUD & SEARCH --- */
+        /* System Header */
         #system-header {
             width: 100%; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 20px;
             background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 100;
         }
-        .meta-row { display: flex; gap: 40px; font-size: 11px; letter-spacing: 2px; }
-        .search-container { width: 100%; max-width: 600px; }
+        .meta-row { display: flex; gap: 40px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+        .meta-item span { color: #fff; font-weight: bold; }
+        .search-container { width: 100%; max-width: 600px; position: relative; }
         .search-bar {
-            width: 100%; padding: 14px 25px; border-radius: 50px; border: 1px solid var(--cyan);
-            background: rgba(0, 242, 255, 0.05); color: #fff; outline: none; text-align: center;
+            width: 100%; padding: 12px 25px; border-radius: 50px; border: 1px solid var(--cyan);
+            background: rgba(0, 242, 255, 0.05); color: #fff; outline: none;
+            backdrop-filter: blur(10px); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+            font-family: inherit; text-align: center;
         }
 
-        /* --- APP WRAPPER --- */
+        /* App Grid */
         #app-wrapper {
-            width: 100%; flex-grow: 1; padding: 20px 5%; 
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 25px;
+            width: 100%; padding: 0 5%; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start;
+            gap: 30px; overflow-y: auto; max-height: 50vh;
+        }
+        .app-icon { 
+            width: 100px; display: flex; flex-direction: column; align-items: center; 
+            cursor: pointer; transition: 0.3s; 
+        }
+        .app-icon:hover { transform: scale(1.1); }
+        .icon-box { 
+            width: 65px; height: 65px; border: 2px solid var(--border); border-radius: 15px;
+            display: flex; justify-content: center; align-items: center; font-size: 30px;
+            background: rgba(0,0,0,0.5); margin-bottom: 8px;
         }
 
-        /* --- HOLOFRAME --- */
-        #holo-overlay {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
-            width: 95%; height: 85%; display: none; flex-direction: column;
+        /* Multi Holoframes */
+        #desktop-manager { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+        .holoframe {
+            position: absolute; top: 15%; left: 15%; width: 70%; height: 70%; min-width: 400px; min-height: 300px;
             border: 2px solid var(--cyan); border-radius: 12px;
-            background: var(--glass); backdrop-filter: blur(30px); z-index: 1000;
+            background: var(--glass); backdrop-filter: blur(25px);
+            box-shadow: 0 0 50px rgba(0, 242, 255, 0.3); pointer-events: auto;
+            resize: both; overflow: hidden; transition: 0.3s;
         }
-        #holo-overlay.active { display: flex; transform: translate(-50%, -50%) scale(1); }
-        .iframe-wrapper { position: relative; flex: 1; background: #000; overflow: hidden; }
+        .holo-header {
+            padding: 15px 25px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0, 242, 255, 0.05); cursor: move;
+        }
+        .controls { display: flex; gap: 15px; font-size: 12px; }
+        .iframe-wrapper { position: relative; height: calc(100% - 50px); background: #000; overflow: hidden; }
         iframe { width: 100%; height: 100%; border: none; }
-
         .portal-overlay {
             position: absolute; inset: 0; z-index: 2000; background: #000;
             display: flex; justify-content: center; align-items: center;
         }
+        .portal-video { width: 100%; height: 100%; object-fit: cover; }
+
+        /* History Panel */
+        #history-panel {
+            position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
+            background: rgba(20, 20, 20, 0.95); border-right: 1px solid rgba(192, 192, 192, 0.5);
+            backdrop-filter: blur(20px); z-index: 3000; transition: 0.5s cubic-bezier(0.85, 0, 0.15, 1);
+        }
+        #history-panel.open { left: 0; }
+        .history-header { padding: 30px 20px; font-size: 14px; font-weight: bold; letter-spacing: 4px; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .history-list { padding: 10px; height: calc(100% - 150px); overflow-y: auto; }
+        .history-item {
+            padding: 15px; margin-bottom: 10px; border: 1px solid rgba(192,192,192,0.1);
+            cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.02);
+        }
+        .history-item:hover { background: rgba(255,255,255,0.08); border-color: #fff; }
+        .history-item .title { font-size: 10px; color: #fff; margin-bottom: 5px; display: block; }
+        .history-item .time { font-size: 8px; color: rgba(192,192,192,0.5); }
+        #history-trigger {
+            position: fixed; top: 50%; left: 0; transform: translateY(-50%);
+            width: 20px; height: 60px; background: rgba(192,192,192,0.2);
+            border: 1px solid rgba(192,192,192,0.5); border-left: none;
+            border-radius: 0 10px 10px 0; cursor: pointer; z-index: 2900;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s;
+        }
+        #history-trigger:hover { background: rgba(255,255,255,0.4); }
+
+        /* Dock */
+        .dock {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 20px; padding: 12px 30px;
+            background: rgba(0,0,0,0.6); border: 1px solid var(--border);
+            border-radius: 50px; backdrop-filter: blur(10px); z-index: 500;
+        }
     </style>
 </head>
 <body>
-
-    <div id="history-panel">
-        <div class="history-header">SILVER_LEDGER</div>
-        <div id="history-content" class="history-list"></div>
-        <div onclick="toggleHistory()" style="padding: 20px; text-align: center; font-size: 10px; cursor: pointer; color: #ff3366;">[ CLOSE ]</div>
-    </div>
 
     <video id="bg-video" autoplay loop muted playsinline>
         <source src="https://raw.githubusercontent.com/highland88999-commits/artemis-hub/main/No_humans_pleas%20(1).mp4" type="video/mp4">
@@ -91,13 +107,14 @@
 
     <header id="system-header">
         <div class="meta-row">
-            <div class="meta-item">DATE: <span id="cur-date"></span></div>
-            <div class="meta-item">TIME: <span id="cur-time"></span></div>
-            <div class="meta-item">LOC: <span id="cur-weather">22°C • CLEAR</span></div>
-            <div class="meta-item" onclick="toggleHistory()" style="cursor:pointer; color:#fff;">[ LEDGER ]</div>
+            <div class="meta-item">DATE: <span id="cur-date">--/--/--</span></div>
+            <div class="meta-item">TIME: <span id="cur-time">00:00:00</span></div>
+            <div class="meta-item">LOC: <span id="cur-weather">SYNCING...</span></div>
+            <div class="meta-item">NET: <span id="cur-traffic">OPTIMAL</span></div>
         </div>
+        
         <div class="search-container">
-            <form onsubmit="executeNeuralSearch(event)">
+            <form id="neural-search-form" onsubmit="executeNeuralSearch(event)">
                 <input type="text" id="search-input" class="search-bar" placeholder="NEURAL SEARCH COMMAND...">
             </form>
         </div>
@@ -105,104 +122,168 @@
 
     <main id="app-wrapper"></main>
 
-    <div id="holo-overlay">
-        <div class="holo-header" style="padding:15px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;">
-            <span id="holo-title">SYSTEM_ACCESS</span>
-            <div onclick="toggleHolo()" style="cursor:pointer; color:#ff3366;">[TERMINATE]</div>
-        </div>
-        <div class="iframe-wrapper">
-            <div id="portal-overlay" class="portal-overlay">
-                <video id="portal-video" loop muted playsinline style="width:100%; height:100%; object-fit:cover;">
-                    <source src="https://raw.githubusercontent.com/highland88999-commits/artemis-hub/main/VID_20260208225522.mp4" type="video/mp4">
-                </video>
-            </div>
-            <iframe id="holo-iframe"></iframe>
-        </div>
+    <div id="desktop-manager"></div>
+
+    <div id="history-panel">
+        <div class="history-header">HISTORY LEDGER</div>
+        <div class="history-list" id="history-list"></div>
+    </div>
+    <div id="history-trigger" onclick="toggleHistory()">&#x2261;</div>
+
+    <div class="dock">
+        <div onclick="spawnFrame('https://artemis-hub.onrender.com', 'NEXUS HUB', '#00f2ff')" style="cursor:pointer; font-weight:bold;">[ OPEN HUB ]</div>
     </div>
 
 <script>
-    const PROXY = "https://your-proxy-name.onrender.com/"; // Replace with your Render URL
+    const PROXY = "https://artemis-proxy.onrender.com/"; // Your confirmed proxy
+    let threads = [];
+    let history = JSON.parse(localStorage.getItem('artemis_history') || "[]");
+
     const apps = [
-        { name: "Nexus", url: "https://nexus-symbiote.onrender.com/", color: "#39ff14", icon: "🧬" },
+        { name: "R.E.M.", url: "https://rem-psi-mauve.vercel.app/", color: "#bc13fe", icon: "👁️" },
         { name: "Aetheris", url: "https://aetheris-business-model.vercel.app/", color: "#00f2ff", icon: "🔱" },
-        { name: "R.E.M.", url: "https://rem-psi-mauve.vercel.app/", color: "#bc13fe", icon: "👁️" }
-        // ... add the rest of your app objects here
+        { name: "Tracker", url: "https://olympus-aetheris.vercel.app/", color: "#7df9ff", icon: "🛰️" },
+        { name: "Hoodies", url: "https://olympus-lac.vercel.app/", color: "#ffd700", icon: "👕" },
+        { name: "Nexus", url: "https://nexus-symbiote.onrender.com/", color: "#39ff14", icon: "🧬" },
+        { name: "The Pearl", url: "https://axiom-repository.vercel.app/", color: "#f0f0f0", icon: "⚪" },
+        { name: "Architect", url: "https://architect-artemis.vercel.app/", color: "#ff00ff", icon: "📐" },
+        { name: "Dutchman", url: "https://the-flying-dutchman.vercel.app/", color: "#005f73", icon: "⚓" },
+        { name: "Starblood", url: "https://starblood.vercel.app/", color: "#ff0000", icon: "🩸" },
+        { name: "Titan Fall", url: "https://mega-city-liard.vercel.app/", color: "#ff8c00", icon: "🤖" },
+        { name: "Finances", url: "https://olympian-finances.vercel.app/", color: "#2ecc71", icon: "⚖️" },
+        { name: "Gully", url: "https://grief-gully.vercel.app/", color: "#581845", icon: "💀" },
+        { name: "Contact", url: "https://georgia-aquarium.vercel.app/", color: "#3498db", icon: "📧" }
     ];
 
-    function toggleHistory() {
-        const panel = document.getElementById('history-panel');
-        panel.classList.toggle('open');
-        if (panel.classList.contains('open')) renderHistory();
-    }
-
-    function logHistory(name, url, color) {
-        let history = JSON.parse(localStorage.getItem('artemis_history') || "[]");
-        history.unshift({ name, url, color, timestamp: new Date().toLocaleTimeString() });
-        localStorage.setItem('artemis_history', JSON.stringify(history.slice(0, 20)));
-    }
-
-    function renderHistory() {
-        const container = document.getElementById('history-content');
-        const history = JSON.parse(localStorage.getItem('artemis_history') || "[]");
-        container.innerHTML = history.map(item => `
-            <div class="history-item" onclick="spawnFrame('${item.url}', '${item.name}', '${item.color}')">
-                <span style="font-size:10px; color:#fff;">${item.name}</span><br>
-                <span style="font-size:8px; color:rgba(255,255,255,0.4);">${item.timestamp}</span>
-            </div>
-        `).join('');
-    }
-
-    function executeNeuralSearch(event) {
-        event.preventDefault();
-        const query = document.getElementById('search-input').value;
-        if (!query) return;
-        const url = PROXY + `https://www.google.com/search?q=${encodeURIComponent(query)}&igu=1`;
-        spawnFrame(url, "SEARCH: " + query.toUpperCase(), "#c0c0c0");
-        logHistory("SEARCH: " + query, url, "#c0c0c0");
-        document.getElementById('search-input').value = '';
-    }
-
-    function spawnFrame(url, name, color) {
-        const holo = document.getElementById('holo-overlay');
-        const iframe = document.getElementById('holo-iframe');
-        const portal = document.getElementById('portal-overlay');
-        
-        holo.style.display = 'flex';
-        setTimeout(() => holo.classList.add('active'), 10);
-        holo.style.borderColor = color;
-        document.getElementById('holo-title').innerText = name;
-        document.getElementById('holo-title').style.color = color;
-        
-        portal.style.display = 'flex';
-        document.getElementById('portal-video').play();
-        iframe.src = url;
-
-        iframe.onload = () => {
-            setTimeout(() => { portal.style.display = 'none'; }, 1500);
-        };
-    }
-
-    function toggleHolo() {
-        const holo = document.getElementById('holo-overlay');
-        holo.classList.remove('active');
-        setTimeout(() => { holo.style.display = 'none'; document.getElementById('holo-iframe').src = ''; }, 400);
-    }
-
-    // Grid Init
+    // Populate App Grid
     const wrapper = document.getElementById('app-wrapper');
     apps.forEach(app => {
         const div = document.createElement('div');
-        div.style.cssText = "width:80px; text-align:center; cursor:pointer;";
-        div.innerHTML = `<div style="font-size:30px; border:1px solid ${app.color}; border-radius:12px; padding:10px; background:rgba(0,0,0,0.5);">${app.icon}</div><span style="font-size:8px; color:${app.color};">${app.name}</span>`;
+        div.className = 'app-icon';
+        div.innerHTML = `
+            <div class="icon-box" style="border-color:${app.color}; box-shadow: 0 0 10px ${app.color}44;">${app.icon}</div>
+            <span style="font-size:9px; color:${app.color}; font-weight:bold;">${app.name}</span>
+        `;
         div.onclick = () => spawnFrame(app.url, app.name, app.color);
         wrapper.appendChild(div);
     });
 
-    setInterval(() => {
+    // History
+    function logHistory(name, url, color) {
+        const entry = { name, url, color, timestamp: new Date().toLocaleTimeString() };
+        history.unshift(entry);
+        if (history.length > 20) history.pop();
+        localStorage.setItem('artemis_history', JSON.stringify(history));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        history.forEach(entry => {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `<span class="title">${entry.name}</span><span class="time">${entry.timestamp}</span>`;
+            item.onclick = () => spawnFrame(entry.url, entry.name, entry.color);
+            list.appendChild(item);
+        });
+    }
+
+    function toggleHistory() {
+        document.getElementById('history-panel').classList.toggle('open');
+    }
+
+    // Neural Search
+    function executeNeuralSearch(event) {
+        event.preventDefault();
+        const query = document.getElementById('search-input').value.trim();
+        if (!query) return;
+
+        const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&igu=1`;
+        const proxiedUrl = PROXY + googleUrl;
+        const name = "SEARCH: " + query.toUpperCase();
+
+        spawnFrame(proxiedUrl, name, "#ffffff");
+        logHistory(name, googleUrl, "#ffffff"); // Log clean URL for reopen
+
+        document.getElementById('search-input').value = '';
+    }
+
+    // Spawn Frame
+    function spawnFrame(url, name, color) {
+        const id = 'thread-' + Date.now();
+        const markup = `
+            <div class="holoframe" id="${id}" style="border-color:${color}; z-index:${threads.length + 1000}">
+                <div class="holo-header" style="background:${color}11">
+                    <span style="color:${color}">${name}</span>
+                    <div class="controls">
+                        <div onclick="goBack('${id}')" style="cursor:pointer;">[BACK]</div>
+                        <div onclick="terminateThread('${id}')" style="cursor:pointer; color:#ff3366;">[TERMINATE]</div>
+                    </div>
+                </div>
+                <div class="iframe-wrapper">
+                    <div class="portal-overlay" id="portal-${id}">
+                        <video class="portal-video" autoplay loop muted playsinline>
+                            <source src="https://raw.githubusercontent.com/highland88999-commits/artemis-hub/main/VID_20260208225522.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <iframe id="iframe-${id}" src="${url}"></iframe>
+                </div>
+            </div>
+        `;
+        document.getElementById('desktop-manager').insertAdjacentHTML('beforeend', markup);
+        threads.push({ id, name, color });
+
+        const frame = document.getElementById(id);
+        const header = frame.querySelector('.holo-header');
+        let isDragging = false, startX, startY;
+        header.onmousedown = e => {
+            isDragging = true;
+            startX = e.clientX - frame.offsetLeft;
+            startY = e.clientY - frame.offsetTop;
+            e.preventDefault();
+        };
+        document.onmousemove = e => {
+            if (isDragging) {
+                frame.style.left = (e.clientX - startX) + 'px';
+                frame.style.top = (e.clientY - startY) + 'px';
+            }
+        };
+        document.onmouseup = () => isDragging = false;
+
+        const iframe = document.getElementById(`iframe-${id}`);
+        iframe.onload = () => {
+            setTimeout(() => {
+                const portal = document.getElementById(`portal-${id}`);
+                if (portal) portal.style.display = 'none';
+            }, 1500);
+        };
+    }
+
+    function terminateThread(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+        threads = threads.filter(t => t.id !== id);
+    }
+
+    function goBack(id) {
+        const iframe = document.getElementById(`iframe-${id}`);
+        if (iframe && iframe.contentWindow) iframe.contentWindow.history.back();
+    }
+
+    // System Stats
+    function updateStats() {
         const now = new Date();
         document.getElementById('cur-date').innerText = now.toLocaleDateString();
         document.getElementById('cur-time').innerText = now.toLocaleTimeString();
-    }, 1000);
+        document.getElementById('cur-weather').innerText = "22°C • CLEAR";
+        document.getElementById('cur-traffic').innerText = "TRAFFIC: LOW";
+    }
+    setInterval(updateStats, 1000);
+    updateStats();
+
+    // Init
+    renderHistory();
 </script>
 </body>
 </html>
