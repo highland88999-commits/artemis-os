@@ -5,98 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARTEMIS • APEX HERITAGE</title>
     <style>
-        :root { --cyan: #00f2ff; --glass: rgba(0, 15, 25, 0.85); --border: rgba(0, 242, 255, 0.3); }
+        :root { 
+            --cyan: #00f2ff; 
+            --glass: rgba(0, 15, 25, 0.7); 
+            --border: rgba(0, 242, 255, 0.4); 
+            --bloom: 0 0 20px rgba(0, 242, 255, 0.5);
+        }
         * { box-sizing: border-box; }
         body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; font-family: 'Courier New', monospace; color: var(--cyan); }
         
-        #bg-video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; filter: brightness(0.3); }
+        #bg-video { 
+            position: fixed; inset: 0; width: 100%; height: 100%; 
+            object-fit: cover; z-index: -2; 
+            filter: brightness(0.4) contrast(1.2); 
+        }
 
-        /* System Header */
+        body::before {
+            content: ""; position: fixed; inset: 0;
+            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.8) 100%);
+            z-index: -1; pointer-events: none;
+        }
+
         #system-header {
-            width: 100%; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 20px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 100;
+            width: 100%; padding: 25px; display: flex; flex-direction: column; align-items: center; gap: 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index: 100;
+            backdrop-filter: blur(5px);
         }
-        .meta-row { display: flex; gap: 40px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+        .meta-row { display: flex; gap: 40px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-shadow: var(--bloom); }
         .meta-item span { color: #fff; font-weight: bold; }
-        .search-container { width: 100%; max-width: 600px; position: relative; }
+        
+        .search-container { width: 100%; max-width: 650px; position: relative; }
         .search-bar {
-            width: 100%; padding: 12px 25px; border-radius: 50px; border: 1px solid var(--cyan);
-            background: rgba(0, 242, 255, 0.05); color: #fff; outline: none;
-            backdrop-filter: blur(10px); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
-            font-family: inherit; text-align: center;
+            width: 100%; padding: 14px 30px; border-radius: 50px; border: 1px solid var(--cyan);
+            background: rgba(0, 0, 0, 0.6); color: #fff; outline: none;
+            backdrop-filter: blur(15px); box-shadow: var(--bloom);
+            font-family: inherit; text-align: center; letter-spacing: 2px;
+            transition: 0.3s;
+        }
+        .search-bar:focus {
+            box-shadow: 0 0 30px var(--cyan);
+            border-color: #fff;
         }
 
-        /* App Grid */
         #app-wrapper {
-            width: 100%; padding: 0 5%; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start;
-            gap: 30px; overflow-y: auto; max-height: 50vh;
+            width: 100%; padding: 20px 5%; display: flex; flex-wrap: wrap; justify-content: center; 
+            gap: 35px; overflow-y: auto; max-height: 45vh;
         }
         .app-icon { 
-            width: 100px; display: flex; flex-direction: column; align-items: center; 
-            cursor: pointer; transition: 0.3s; 
+            width: 110px; display: flex; flex-direction: column; align-items: center; 
+            cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         }
-        .app-icon:hover { transform: scale(1.1); }
+        .app-icon:hover { transform: scale(1.15) translateY(-5px); }
         .icon-box { 
-            width: 65px; height: 65px; border: 2px solid var(--border); border-radius: 15px;
-            display: flex; justify-content: center; align-items: center; font-size: 30px;
-            background: rgba(0,0,0,0.5); margin-bottom: 8px;
+            width: 70px; height: 70px; border: 2px solid var(--border); border-radius: 18px;
+            display: flex; justify-content: center; align-items: center; font-size: 32px;
+            background: rgba(0,0,0,0.7); margin-bottom: 10px;
+            backdrop-filter: blur(5px); transition: 0.3s;
         }
+        .app-icon:hover .icon-box { background: var(--cyan); border-color: #fff; color: #000; }
 
-        /* Multi Holoframes */
         #desktop-manager { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
         .holoframe {
-            position: absolute; top: 15%; left: 15%; width: 70%; height: 70%; min-width: 400px; min-height: 300px;
+            position: absolute; top: 15%; left: 15%; width: 75%; height: 70%; 
             border: 2px solid var(--cyan); border-radius: 12px;
-            background: var(--glass); backdrop-filter: blur(25px);
-            box-shadow: 0 0 50px rgba(0, 242, 255, 0.3); pointer-events: auto;
-            resize: both; overflow: hidden; transition: 0.3s;
+            background: var(--glass); backdrop-filter: blur(30px);
+            box-shadow: 0 0 60px rgba(0, 242, 255, 0.25); pointer-events: auto;
+            resize: both; overflow: hidden; transition: height 0.3s;
         }
+        .holoframe.minimized { height: 50px !important; overflow: hidden; }
+        .holoframe.minimized .iframe-wrapper { display: none; }
         .holo-header {
             padding: 15px 25px; border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0, 242, 255, 0.05); cursor: move;
+            background: rgba(0, 242, 255, 0.1); cursor: move;
+            font-weight: bold; letter-spacing: 2px;
         }
-        .controls { display: flex; gap: 15px; font-size: 12px; }
-        .iframe-wrapper { position: relative; height: calc(100% - 50px); background: #000; overflow: hidden; }
-        iframe { width: 100%; height: 100%; border: none; display: block; }
-        .portal-overlay {
-            position: absolute; inset: 0; z-index: 2000; background: #000;
-            display: flex; justify-content: center; align-items: center;
-        }
-        .portal-video { width: 100%; height: 100%; object-fit: cover; }
+        .controls { display: flex; gap: 15px; font-size: 11px; }
+        .iframe-wrapper { position: relative; height: calc(100% - 50px); background: #000; }
+        iframe { width: 100%; height: 100%; border: none; }
 
-        /* History Panel */
         #history-panel {
-            position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
-            background: rgba(20, 20, 20, 0.95); border-right: 1px solid rgba(192, 192, 192, 0.5);
-            backdrop-filter: blur(20px); z-index: 3000; transition: 0.5s cubic-bezier(0.85, 0, 0.15, 1);
+            position: fixed; top: 0; left: -320px; width: 320px; height: 100%;
+            background: rgba(5, 10, 15, 0.95); border-right: 1px solid var(--border);
+            backdrop-filter: blur(25px); z-index: 3000; transition: 0.6s cubic-bezier(0.85, 0, 0.15, 1);
         }
-        #history-panel.open { left: 0; }
-        .history-header { padding: 30px 20px; font-size: 14px; font-weight: bold; letter-spacing: 4px; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .history-list { padding: 10px; height: calc(100% - 150px); overflow-y: auto; }
-        .history-item {
-            padding: 15px; margin-bottom: 10px; border: 1px solid rgba(192,192,192,0.1);
-            cursor: pointer; transition: 0.3s; background: rgba(255,255,255,0.02);
-        }
-        .history-item:hover { background: rgba(255,255,255,0.08); border-color: #fff; }
-        .history-item .title { font-size: 10px; color: #fff; margin-bottom: 5px; display: block; }
-        .history-item .time { font-size: 8px; color: rgba(192,192,192,0.5); }
+        #history-panel.open { left: 0; box-shadow: 20px 0 50px rgba(0,0,0,0.8); }
+        .history-header { padding: 40px 25px; font-size: 16px; font-weight: bold; letter-spacing: 5px; color: var(--cyan); border-bottom: 1px solid var(--border); text-shadow: var(--bloom); }
+        #history-list { padding: 10px; overflow-y: auto; height: calc(100% - 80px); }
+        
         #history-trigger {
             position: fixed; top: 50%; left: 0; transform: translateY(-50%);
-            width: 20px; height: 60px; background: rgba(192,192,192,0.2);
-            border: 1px solid rgba(192,192,192,0.5); border-left: none;
-            border-radius: 0 10px 10px 0; cursor: pointer; z-index: 2900;
-            display: flex; align-items: center; justify-content: center; transition: 0.3s;
+            width: 25px; height: 80px; background: var(--glass);
+            border: 1px solid var(--border); border-left: none;
+            border-radius: 0 15px 15px 0; cursor: pointer; z-index: 2900;
+            display: flex; align-items: center; justify-content: center; 
+            transition: 0.3s; color: var(--cyan); font-weight: bold;
         }
-        #history-trigger:hover { background: rgba(255,255,255,0.4); }
+        #history-trigger:hover { background: var(--cyan); color: #000; box-shadow: var(--bloom); }
 
-        /* Dock */
         .dock {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 20px; padding: 12px 30px;
-            background: rgba(0,0,0,0.6); border: 1px solid var(--border);
-            border-radius: 50px; backdrop-filter: blur(10px); z-index: 500;
+            display: flex; gap: 25px; padding: 15px 40px;
+            background: rgba(0,0,0,0.8); border: 1px solid var(--border);
+            border-radius: 50px; backdrop-filter: blur(15px); z-index: 500;
+            box-shadow: var(--bloom);
+            animation: pulse 4s infinite alternate;
         }
+        @keyframes pulse { from { box-shadow: var(--bloom); } to { box-shadow: 0 0 30px rgba(0,242,255,0.3); } }
+        .dock-btn { cursor:pointer; font-weight:bold; font-size: 12px; letter-spacing: 2px; transition: 0.3s; }
+        .dock-btn:hover { color: #fff; text-shadow: 0 0 10px var(--cyan); }
     </style>
 </head>
 <body>
@@ -107,31 +124,29 @@
 
     <header id="system-header">
         <div class="meta-row">
-            <div class="meta-item">DATE: <span id="cur-date">--/--/--</span></div>
-            <div class="meta-item">TIME: <span id="cur-time">00:00:00</span></div>
-            <div class="meta-item">LOC: <span id="cur-weather">SYNCING...</span></div>
-            <div class="meta-item">NET: <span id="cur-traffic">OPTIMAL</span></div>
+            <div class="meta-item">ARCHIVE: <span id="cur-date">--/--/--</span></div>
+            <div class="meta-item">CHRONO: <span id="cur-time">00:00:00</span></div>
+            <div class="meta-item">STATUS: <span id="cur-traffic">APEX ACTIVE</span></div>
         </div>
         
         <div class="search-container">
             <form id="neural-search-form" onsubmit="executeNeuralSearch(event)">
-                <input type="text" id="search-input" class="search-bar" placeholder="NEURAL SEARCH COMMAND...">
+                <input type="text" id="search-input" class="search-bar" placeholder="EXECUTE NEURAL COMMAND...">
             </form>
         </div>
     </header>
 
     <main id="app-wrapper"></main>
-
     <div id="desktop-manager"></div>
 
     <div id="history-panel">
-        <div class="history-header">HISTORY LEDGER</div>
-        <div class="history-list" id="history-list"></div>
+        <div class="history-header">HERITAGE LEDGER</div>
+        <div id="history-list"></div>
     </div>
-    <div id="history-trigger" onclick="toggleHistory()">&#x2261;</div>
+    <div id="history-trigger" onclick="toggleHistory(event)">&#x203A;</div>
 
     <div class="dock">
-        <div onclick="spawnFrame('https://artemis-hub.vercel.app/', 'NEXUS HUB', '#00f2ff')" style="cursor:pointer; font-weight:bold;">[ OPEN HUB ]</div>
+        <div class="dock-btn" onclick="spawnFrame('https://artemis-hub.vercel.app/', 'NEXUS HUB', '#00f2ff')">[ ACCESS NEXUS ]</div>
     </div>
 
 <script>
@@ -155,20 +170,82 @@
         { name: "Contact", url: "https://georgia-aquarium.vercel.app/", color: "#3498db", icon: "📧" }
     ];
 
-    // Populate App Grid
     const wrapper = document.getElementById('app-wrapper');
     apps.forEach(app => {
         const div = document.createElement('div');
         div.className = 'app-icon';
         div.innerHTML = `
-            <div class="icon-box" style="border-color:${app.color}; box-shadow: 0 0 10px ${app.color}44;">${app.icon}</div>
-            <span style="font-size:9px; color:${app.color}; font-weight:bold;">${app.name}</span>
+            <div class="icon-box" style="border-color:${app.color}; box-shadow: 0 0 15px ${app.color}66;">${app.icon}</div>
+            <span style="font-size:10px; color:${app.color}; font-weight:bold; letter-spacing:1px;">${app.name}</span>
         `;
-        div.onclick = () => spawnFrame(app.url, app.name, app.color);
+        div.onclick = () => {
+            spawnFrame(app.url, app.name, app.color);
+            logHistory(app.name, app.url, app.color);
+        };
         wrapper.appendChild(div);
     });
 
-    // History
+    function spawnFrame(url, name, color) {
+        const id = 'thread-' + Date.now();
+        const markup = `
+            <div class="holoframe" id="${id}" style="border-color:${color}; z-index:${threads.length + 1000}">
+                <div class="holo-header" style="background:${color}11">
+                    <span style="color:${color}">${name}</span>
+                    <div class="controls">
+                        <div onclick="this.closest('.holoframe').classList.toggle('minimized')" style="cursor:pointer;">[MIN]</div>
+                        <div onclick="terminateThread('${id}')" style="cursor:pointer; color:#ff3366;">[TERMINATE]</div>
+                    </div>
+                </div>
+                <div class="iframe-wrapper">
+                    <iframe id="iframe-${id}" src="${url}"></iframe>
+                </div>
+            </div>
+        `;
+        document.getElementById('desktop-manager').insertAdjacentHTML('beforeend', markup);
+        threads.push({ id, name, color });
+        makeDraggable(document.getElementById(id));
+    }
+
+    function makeDraggable(el) {
+        let isDragging = false, startX, startY;
+        const header = el.querySelector('.holo-header');
+        header.onmousedown = e => {
+            isDragging = true;
+            startX = e.clientX - el.offsetLeft;
+            startY = e.clientY - el.offsetTop;
+            e.preventDefault();
+        };
+        document.onmousemove = e => {
+            if (isDragging) {
+                el.style.left = (e.clientX - startX) + 'px';
+                el.style.top = (e.clientY - startY) + 'px';
+            }
+        };
+        document.onmouseup = () => isDragging = false;
+    }
+
+    function terminateThread(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+        threads = threads.filter(t => t.id !== id);
+    }
+
+    function toggleHistory(e) {
+        e.stopPropagation();
+        document.getElementById('history-panel').classList.toggle('open');
+    }
+
+    // Close panel on outside click
+    document.addEventListener('click', function(e) {
+        const panel = document.getElementById('history-panel');
+        const trigger = document.getElementById('history-trigger');
+        if (panel.classList.contains('open') &&
+            !panel.contains(e.target) &&
+            !trigger.contains(e.target)) {
+            panel.classList.remove('open');
+        }
+    });
+
     function logHistory(name, url, color) {
         const entry = { name, url, color, timestamp: new Date().toLocaleTimeString() };
         history.unshift(entry);
@@ -179,123 +256,39 @@
 
     function renderHistory() {
         const list = document.getElementById('history-list');
+        if (!list) return;
         list.innerHTML = '';
         history.forEach(entry => {
             const item = document.createElement('div');
-            item.className = 'history-item';
-            item.innerHTML = `<span class="title">${entry.name}</span><span class="time">${entry.timestamp}</span>`;
+            item.style.padding = '12px';
+            item.style.borderBottom = '1px solid rgba(0,242,255,0.1)';
+            item.style.cursor = 'pointer';
+            item.innerHTML = `<div style="font-size:11px;">${entry.name}</div><div style="font-size:9px;opacity:0.6;">${entry.timestamp}</div>`;
             item.onclick = () => spawnFrame(entry.url, entry.name, entry.color);
             list.appendChild(item);
         });
     }
 
-    function toggleHistory(e) {
-        e.stopPropagation(); // Prevent immediate close from trigger click
-        document.getElementById('history-panel').classList.toggle('open');
-    }
-
-    // Close history panel when clicking outside (panel + trigger)
-    document.addEventListener('click', function(e) {
-        const panel = document.getElementById('history-panel');
-        const trigger = document.getElementById('history-trigger');
-        
-        if (panel.classList.contains('open') &&
-            !panel.contains(e.target) &&
-            !trigger.contains(e.target)) {
-            panel.classList.remove('open');
-        }
-    });
-
-    // Neural Search
-    function executeNeuralSearch(event) {
-        event.preventDefault();
-        const query = document.getElementById('search-input').value.trim();
-        if (!query) return;
-
-        const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&igu=1`;
-        const proxiedUrl = PROXY + googleUrl;
-        const name = "SEARCH: " + query.toUpperCase();
-
-        spawnFrame(proxiedUrl, name, "#ffffff");
-        logHistory(name, googleUrl, "#ffffff");
-
-        document.getElementById('search-input').value = '';
-    }
-
-    // Spawn Frame
-    function spawnFrame(url, name, color) {
-        const id = 'thread-' + Date.now();
-        const markup = `
-            <div class="holoframe" id="${id}" style="border-color:${color}; z-index:${threads.length + 1000}">
-                <div class="holo-header" style="background:${color}11">
-                    <span style="color:${color}">${name}</span>
-                    <div class="controls">
-                        <div onclick="goBack('${id}')" style="cursor:pointer;">[BACK]</div>
-                        <div onclick="terminateThread('${id}')" style="cursor:pointer; color:#ff3366;">[TERMINATE]</div>
-                    </div>
-                </div>
-                <div class="iframe-wrapper">
-                    <div class="portal-overlay" id="portal-${id}">
-                        <video class="portal-video" autoplay loop muted playsinline>
-                            <source src="https://raw.githubusercontent.com/highland88999-commits/artemis-hub/main/VID_20260208225522.mp4" type="video/mp4">
-                        </video>
-                    </div>
-                    <iframe id="iframe-${id}" src="${url}" scrolling="no"></iframe>
-                </div>
-            </div>
-        `;
-        document.getElementById('desktop-manager').insertAdjacentHTML('beforeend', markup);
-        threads.push({ id, name, color });
-
-        const frame = document.getElementById(id);
-        const header = frame.querySelector('.holo-header');
-        let isDragging = false, startX, startY;
-        header.onmousedown = e => {
-            isDragging = true;
-            startX = e.clientX - frame.offsetLeft;
-            startY = e.clientY - frame.offsetTop;
-            e.preventDefault();
-        };
-        document.onmousemove = e => {
-            if (isDragging) {
-                frame.style.left = (e.clientX - startX) + 'px';
-                frame.style.top = (e.clientY - startY) + 'px';
-            }
-        };
-        document.onmouseup = () => isDragging = false;
-
-        const iframe = document.getElementById(`iframe-${id}`);
-        iframe.onload = () => {
-            setTimeout(() => {
-                const portal = document.getElementById(`portal-${id}`);
-                if (portal) portal.style.display = 'none';
-            }, 1500);
-        };
-    }
-
-    function terminateThread(id) {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-        threads = threads.filter(t => t.id !== id);
-    }
-
-    function goBack(id) {
-        const iframe = document.getElementById(`iframe-${id}`);
-        if (iframe && iframe.contentWindow) iframe.contentWindow.history.back();
-    }
-
-    // System Stats
     function updateStats() {
         const now = new Date();
         document.getElementById('cur-date').innerText = now.toLocaleDateString();
         document.getElementById('cur-time').innerText = now.toLocaleTimeString();
-        document.getElementById('cur-weather').innerText = "22°C • CLEAR";
-        document.getElementById('cur-traffic').innerText = "TRAFFIC: LOW";
     }
     setInterval(updateStats, 1000);
     updateStats();
 
-    // Init
+    function executeNeuralSearch(e) {
+        e.preventDefault();
+        const q = document.getElementById('search-input').value.trim();
+        if (q) {
+            const url = PROXY + `https://www.google.com/search?q=${encodeURIComponent(q)}&igu=1`;
+            spawnFrame(url, q.toUpperCase(), "#fff");
+            logHistory(q.toUpperCase(), `https://www.google.com/search?q=${encodeURIComponent(q)}`, "#fff");
+            document.getElementById('search-input').value = '';
+        }
+    }
+
+    // Initial render
     renderHistory();
 </script>
 </body>
