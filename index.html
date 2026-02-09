@@ -2,178 +2,152 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARTEMIS • NEURAL GATEWAY</title>
+    <title>ARTEMIS • MULTI-THREADED OS</title>
     <style>
-        :root {
-            --cyan: #00f2ff;
-            --purple: #bc13fe;
-            --glass: rgba(0, 20, 30, 0.8);
-            --neon-glow: 0 0 20px rgba(0, 242, 255, 0.5);
-        }
+        :root { --cyan: #00f2ff; --glass: rgba(0, 15, 25, 0.85); }
+        body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; font-family: monospace; }
+        
+        #bg-video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; filter: brightness(0.3); }
 
-        * { box-sizing: border-box; }
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; background: #000; font-family: 'Courier New', monospace; 
+        /* Window Container */
+        .holoframe {
+            position: absolute; top: 5%; left: 5%; width: 90%; height: 80%;
+            display: flex; flex-direction: column; border: 2px solid var(--cyan);
+            border-radius: 12px; background: var(--glass); backdrop-filter: blur(15px);
+            box-shadow: 0 0 30px rgba(0,242,255,0.2); z-index: 10;
         }
-
-        /* --- BACKGROUND LAYER --- */
-        #bg-video {
-            position: fixed; inset: 0; width: 100%; height: 100%;
-            object-fit: cover; z-index: -1; filter: brightness(0.3) contrast(1.2);
-        }
-
-        /* --- THE HOLOFRAME (The Window) --- */
-        #holo-overlay {
-            position: fixed; 
-            top: 50%; left: 50%; 
-            transform: translate(-50%, -50%) scale(0.9);
-            width: 90%; height: 80%;
-            display: none; /* Hidden until icon clicked */
-            flex-direction: column;
-            border: 2px solid var(--cyan);
-            border-radius: 12px;
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            box-shadow: var(--neon-glow), inset 0 0 30px rgba(0, 242, 255, 0.1);
-            z-index: 1000;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        #holo-overlay.active { display: flex; transform: translate(-50%, -50%) scale(1); }
+        .holoframe.hidden { display: none; }
 
         .holo-header {
-            padding: 12px 20px;
-            background: rgba(0, 242, 255, 0.1);
+            padding: 10px 20px; border-bottom: 1px solid var(--cyan);
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--cyan);
-            letter-spacing: 3px; font-weight: bold; color: var(--cyan);
-            text-shadow: 0 0 10px var(--cyan);
+            background: rgba(0, 242, 255, 0.1); color: var(--cyan);
         }
 
-        .close-btn { cursor: pointer; color: #ff3366; transition: 0.3s; }
-        .close-btn:hover { text-shadow: 0 0 15px #ff3366; transform: scale(1.1); }
+        .iframe-wrapper { position: relative; flex: 1; background: #000; overflow: hidden; }
+        iframe { width: 100%; height: 100%; border: none; }
 
-        .iframe-wrapper { position: relative; flex: 1; overflow: hidden; background: #000; }
-
-        #holo-iframe {
-            width: 100%; height: 100%; border: none;
-            filter: saturate(1.2) brightness(1.1) contrast(1.1);
-        }
-
-        /* --- TRANSITION OVERLAY (Communing) --- */
-        #transition-overlay {
-            position: absolute; inset: 0; z-index: 2000;
-            background: #000; display: none; justify-content: center; align-items: center;
-        }
-        #transition-video { width: 100%; height: 100%; object-fit: cover; }
-
-        /* --- THE DOCK (Access Icons) --- */
-        .dock {
-            position: fixed; bottom: 30px; left: 50%;
-            transform: translateX(-50%);
-            display: flex; gap: 20px;
-            padding: 15px 30px;
-            background: rgba(0, 255, 255, 0.05);
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            border-radius: 50px;
-            backdrop-filter: blur(10px);
-            z-index: 500;
-        }
-
-        .dock-icon {
-            width: 50px; height: 50px;
-            border: 1px solid var(--cyan);
-            border-radius: 50%;
+        /* Portal Transition */
+        .portal-overlay {
+            position: absolute; inset: 0; z-index: 2000; background: #000;
             display: flex; justify-content: center; align-items: center;
-            cursor: pointer; transition: 0.3s;
-            background: rgba(0, 0, 0, 0.5);
         }
+        .portal-video { width: 100%; height: 100%; object-fit: cover; }
 
-        .dock-icon:hover {
-            background: var(--cyan);
-            box-shadow: 0 0 20px var(--cyan);
-            transform: translateY(-10px);
+        /* Tab / Thread Switcher */
+        #thread-switcher {
+            position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; z-index: 2000;
         }
+        .thread-pill {
+            padding: 5px 15px; border: 1px solid var(--cyan); color: var(--cyan);
+            background: rgba(0,0,0,0.7); cursor: pointer; font-size: 0.7rem;
+        }
+        .thread-pill.active { background: var(--cyan); color: #000; box-shadow: 0 0 10px var(--cyan); }
 
-        .dock-icon svg { width: 25px; height: 25px; fill: var(--cyan); transition: 0.3s; }
-        .dock-icon:hover svg { fill: #000; }
-
+        /* Bottom Dock */
+        .dock {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 20px; padding: 10px 30px;
+            background: rgba(0,242,255,0.05); border: 1px solid var(--cyan);
+            border-radius: 50px; backdrop-filter: blur(10px); z-index: 2000;
+        }
+        .dock-btn { cursor: pointer; color: var(--cyan); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <video id="bg-video" autoplay loop muted playsinline>
-        <source src="https://raw.githubusercontent.com/highland88999-commits/artemis-hub/main/No_humans_pleas%20(1).mp4" type="video/mp4">
-    </video>
+<video id="bg-video" autoplay loop muted playsinline>
+    <source src="https://raw.githubusercontent.com/highland88999-commits/artemis-hub/main/No_humans_pleas%20(1).mp4" type="video/mp4">
+</video>
 
-    <div id="holo-overlay">
-        <div class="holo-header">
-            <span id="holo-title">NEXUS STATUS: READY</span>
-            <div class="close-btn" onclick="toggleHolo()">[TERMINATE]</div>
-        </div>
-        <div class="iframe-wrapper">
-            <div id="transition-overlay">
-                <video id="transition-video" loop muted playsinline>
-                    <source src="https://raw.githubusercontent.com/highland88999-commits/artemis-hub/main/VID_20260208225522.mp4" type="video/mp4">
-                </video>
+<div id="desktop"></div>
+
+<div id="thread-switcher"></div>
+
+<div class="dock">
+    <div class="dock-btn" onclick="spawnFrame('https://artemis-hub.onrender.com', 'HUB')">NEW_THREAD +</div>
+</div>
+
+<script>
+    let threads = [];
+    let activeThreadId = null;
+
+    function spawnFrame(url, name) {
+        const id = 'thread-' + Date.now();
+        const frameMarkup = `
+            <div class="holoframe" id="${id}">
+                <div class="holo-header">
+                    <span>${name}</span>
+                    <div onclick="terminateThread('${id}')" style="cursor:pointer; color:#ff3366;">[X]</div>
+                </div>
+                <div class="iframe-wrapper">
+                    <div class="portal-overlay" id="portal-${id}">
+                        <video class="portal-video" autoplay loop muted playsinline>
+                            <source src="https://raw.githubusercontent.com/highland88999-commits/artemis-hub/main/VID_20260208225522.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <iframe id="iframe-${id}" src="${url}"></iframe>
+                </div>
             </div>
-            <iframe id="holo-iframe" src="https://artemis-hub.onrender.com" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
-        </div>
-    </div>
+        `;
 
-    <div class="dock">
-        <div class="dock-icon" onclick="toggleHolo()" title="Neural Hub">
-            <svg viewBox="0 0 24 24"><path d="M4,10H21V11H4V10M4,12H21V13H4V12M4,14H21V15H4V14M21,17H4V18H21V17M21,7H4V8H21V7M4,5V6H21V5H4Z" /></svg>
-        </div>
-        <div class="dock-icon" onclick="toggleHolo()" title="Search">
-            <svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" /></svg>
-        </div>
-    </div>
+        document.getElementById('desktop').insertAdjacentHTML('beforeend', frameMarkup);
+        
+        const iframe = document.getElementById(`iframe-${id}`);
+        iframe.onload = () => {
+            setTimeout(() => {
+                document.getElementById(`portal-${id}`).style.display = 'none';
+            }, 1500);
+        };
 
-    <script>
-        const holo = document.getElementById('holo-overlay');
-        const iframe = document.getElementById('holo-iframe');
-        const title = document.getElementById('holo-title');
-        const transition = document.getElementById('transition-overlay');
-        const transVideo = document.getElementById('transition-video');
+        threads.push({ id, name });
+        switchThread(id);
+        updateSwitcher();
+    }
 
-        // Toggle the Glass Holoframe Visibility
-        function toggleHolo() {
-            if (holo.style.display === 'flex') {
-                holo.style.display = 'none';
-                holo.classList.remove('active');
+    function switchThread(id) {
+        threads.forEach(t => {
+            document.getElementById(t.id).classList.toggle('hidden', t.id !== id);
+        });
+        activeThreadId = id;
+        updateSwitcher();
+    }
+
+    function terminateThread(id) {
+        document.getElementById(id).remove();
+        threads = threads.filter(t => t.id !== id);
+        if (threads.length > 0) switchThread(threads[threads.length - 1].id);
+        else updateSwitcher();
+    }
+
+    function updateSwitcher() {
+        const container = document.getElementById('thread-switcher');
+        container.innerHTML = threads.map(t => `
+            <div class="thread-pill ${t.id === activeThreadId ? 'active' : ''}" onclick="switchThread('${t.id}')">
+                ${t.name}
+            </div>
+        `).join('');
+    }
+
+    // Listen for Hub Messages
+    window.addEventListener('message', (event) => {
+        if (event.data.type === 'load_site') {
+            // Check if user wants a new tab or use existing
+            if (event.data.newTab) {
+                spawnFrame(event.data.url, event.data.name);
             } else {
-                holo.style.display = 'flex';
-                setTimeout(() => holo.classList.add('active'), 10);
-                // Reset to Hub if it was on another site
-                iframe.src = "https://artemis-hub.onrender.com";
-                title.textContent = "NEXUS STATUS: ONLINE";
+                const currentIframe = document.getElementById(`iframe-${activeThreadId}`);
+                const currentPortal = document.getElementById(`portal-${activeThreadId}`);
+                currentPortal.style.display = 'flex';
+                currentIframe.src = event.data.url;
+                // Iframe.onload handles hiding portal
             }
         }
+    });
 
-        // Listen for messages from the Hub (when a site is clicked)
-        window.addEventListener('message', (event) => {
-            if (event.data.type === 'load_site') {
-                // Show "Communing" animation
-                transition.style.display = 'flex';
-                transVideo.play();
-                
-                // Set the proxied URL
-                iframe.src = event.data.url;
-                title.textContent = "SYNCING: " + (event.data.name || "EXTERNAL_NODE");
-
-                // Hide animation once loaded
-                iframe.onload = () => {
-                    setTimeout(() => {
-                        transition.style.display = 'none';
-                        transVideo.pause();
-                        title.textContent = "LINK ESTABLISHED";
-                    }, 1200); // Aesthetic delay
-                };
-            }
-        });
-    </script>
+    // Initial Spawn
+    spawnFrame('https://artemis-hub.onrender.com', 'HUB');
+</script>
 </body>
 </html>
