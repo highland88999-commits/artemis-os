@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARTEMIS • NEXUS HUB</title>
+    <style>
+        :root { --cyan: #00f2ff; --bg: #050a10; }
+        body { 
+            background: transparent; color: var(--cyan);
+            font-family: 'Courier New', monospace; margin: 0; padding: 0; 
+            height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+        }
+        .omnibox-container { padding: 20px; background: rgba(0,0,0,0.8); z-index: 10; }
+        #browser-input { 
+            width: 100%; background: #000; border: 1px solid var(--cyan); 
+            padding: 10px; border-radius: 20px; color: #fff; outline: none;
+        }
+        .nexus-viewport { flex: 1; overflow-y: auto; padding: 20px; }
+        .sector-title { font-size: 1.5rem; border-bottom: 1px solid var(--cyan); margin-bottom: 10px; display: block; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .node { 
+            background: rgba(0, 20, 30, 0.8); border: 1px solid #333; padding: 15px; 
+            border-radius: 10px; text-align: center; cursor: pointer; transition: 0.2s;
+        }
+        .node:hover { border-color: var(--cyan); transform: scale(1.05); }
+        .node-icon { font-size: 24px; display: block; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="omnibox-container">
+        <input type="text" id="browser-input" placeholder="SEARCH OR ENTER URL...">
+    </div>
+    <div class="nexus-viewport">
+        <span class="sector-title">CORE PROTOCOLS</span>
+        <div class="grid" id="grid-core"></div>
+        <br>
+        <span class="sector-title">MEDIA & GAMING</span>
+        <div class="grid" id="grid-media"></div>
+    </div>
+<script>
+    const data = {
+        CORE: [
+            { name: "Google", url: "https://google.com/search?igu=1", icon: "🔍" },
+            { name: "ChatGPT", url: "https://chat.openai.com", icon: "🤖" },
+            { name: "GitHub", url: "https://github.com", icon: "🐙" }
+        ],
+        MEDIA: [
+            { name: "YouTube", url: "https://youtube.com", icon: "▶️" },
+            { name: "Spotify", url: "https://open.spotify.com", icon: "🎧" },
+            { name: "Twitch", url: "https://twitch.tv", icon: "👾" },
+            { name: "Xbox Cloud", url: "https://www.xbox.com/play", icon: "🎮" }
+        ]
+    };
+
+    function render() {
+        renderGrid('CORE', 'grid-core');
+        renderGrid('MEDIA', 'grid-media');
+    }
+
+    function renderGrid(cat, id) {
+        const el = document.getElementById(id);
+        data[cat].forEach(app => {
+            const node = document.createElement('div');
+            node.className = 'node';
+            node.innerHTML = `<span class="node-icon">${app.icon}</span>${app.name}`;
+            node.onclick = () => {
+                window.parent.postMessage({ type: 'spawn_frame', url: app.url, name: app.name }, '*');
+            };
+            el.appendChild(node);
+        });
+    }
+
+    document.getElementById('browser-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const val = e.target.value;
+            const url = val.includes('.') ? 'https://' + val : 'https://google.com/search?igu=1&q=' + val;
+            window.parent.postMessage({ type: 'spawn_frame', url: url, name: val }, '*');
+        }
+    });
+
+    render();
+</script>
+</body>
+</html>
