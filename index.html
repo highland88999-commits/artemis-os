@@ -3,397 +3,959 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARTEMIS | MOUNT OLYMPUS</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-startup-image" href="assets/olympus-splash.png">
-    
-    <meta property="og:title" content="Artemis OS | Mount Olympus">
-    <meta property="og:description" content="The Future of the Internet. A weightless, cloud-native OS.">
-    <meta property="og:image" content="assets/social-preview.png">
-
+    <title>ARTEMIS • APEX HERITAGE</title>
     <style>
         :root { 
             --cyan: #00f2ff; 
-            --bg-dark: #050a10;
             --glass: rgba(0, 15, 25, 0.7); 
             --border: rgba(0, 242, 255, 0.4); 
             --bloom: 0 0 20px rgba(0, 242, 255, 0.5);
-            --transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        body, html { 
-            margin:0; padding:0; width:100%; height:100%; 
-            overflow:hidden; background: var(--bg-dark); 
-            font-family: 'Courier New', monospace; color: var(--cyan); 
+        /* Transparent body to show video/image background */
+        body, html { margin:0; padding:0; width:100%; height:100vh; overflow:hidden; background: transparent; font-family: 'Courier New', monospace; color: var(--cyan); transition: background 0.8s ease-in-out, filter 0.5s ease; }
+        
+        /* --- BACKGROUND CONTAINER --- */
+        #apex-background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -10;
+            overflow: hidden;
+            background: #000;
+        }
+        #image-bg, #video-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            transition: opacity 0.8s ease-in-out;
+            filter: brightness(0.6) contrast(1.2);
+        }
+        #bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.6) 100%);
+            z-index: -5; pointer-events: none;
         }
 
-        /* --- 1. OLYMPUS BOOT SCREEN --- */
-        #olympus-boot {
-            position: fixed; inset: 0; background: #000; z-index: 20000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 1.5s ease;
+        /* --- BOOT SCREEN --- */
+        #olympus-boot-screen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 2s ease-in-out;
         }
-        #boot-video { width: 300px; filter: drop-shadow(0 0 20px var(--cyan)); }
-        .boot-loader {
-            width: 200px; height: 2px; background: rgba(255,255,255,0.1);
-            margin-top: 20px; overflow: hidden; border-radius: 4px;
+        #boot-video {
+            width: 300px;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 0 20px rgba(0, 242, 255, 0.4));
         }
-        #loader-fill {
-            width: 0%; height: 100%; background: #fff; box-shadow: 0 0 10px #fff;
+        .loader-container {
+            width: 200px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #loader-progress {
+            width: 0%;
+            height: 100%;
+            background: #fff;
+            box-shadow: 0 0 10px #fff;
             transition: width 3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* --- 2. IDENTITY REGISTRATION --- */
-        #registration-screen {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px);
-            z-index: 19000; display: none; flex-direction: column;
-            align-items: center; justify-content: center; opacity: 1; transition: opacity 1s;
+        /* --- GLOBAL SEARCH OVERLAY --- */
+        #global-search-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 15vh;
+            z-index: 11000;
         }
-        .reg-card {
-            width: 300px; padding: 30px; border: 1px solid var(--cyan);
-            background: rgba(0, 20, 30, 0.8); border-radius: 20px;
-            box-shadow: var(--bloom); text-align: center;
+        .search-container {
+            width: 90%;
+            max-width: 600px;
+            background: rgba(20, 20, 25, 0.95);
+            border: 1px solid var(--cyan);
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.2);
+            overflow: hidden;
         }
-        .reg-input {
-            background: transparent; border: none; border-bottom: 2px solid var(--cyan);
-            color: white; font-size: 24px; letter-spacing: 5px; text-align: center;
-            width: 100%; margin: 20px 0; outline: none;
+        .search-input-wrapper {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 242, 255, 0.1);
         }
+        #global-search-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 1.2rem;
+            width: 100%;
+            margin-left: 15px;
+        }
+        #search-results { padding: 20px; color: #fff; }
 
-        /* --- 3. DESKTOP ENVIRONMENT --- */
-        #bg-layer {
-            position: fixed; inset: -5%; width: 110%; height: 110%;
-            object-fit: cover; z-index: -10; transition: transform 0.1s ease-out;
-        }
-
+        /* --- SYSTEM HEADER --- */
         #system-header {
             width: 100%; padding: 25px; display: flex; flex-direction: column; align-items: center; gap: 20px;
             background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 100;
+            backdrop-filter: blur(2px);
         }
-        .meta-row { display: flex; gap: 20px; font-size: 10px; letter-spacing: 2px; }
+        .meta-row { display: flex; gap: 40px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-shadow: var(--bloom); }
+        .meta-item span { color: #fff; font-weight: bold; }
+
+        .search-container { width: 100%; max-width: 650px; position: relative; }
         .search-bar {
-            width: 90%; max-width: 600px; padding: 12px 20px; border-radius: 50px;
-            border: 1px solid var(--cyan); background: rgba(0, 0, 0, 0.6);
-            color: #fff; text-align: center; letter-spacing: 2px; outline: none;
-            backdrop-filter: blur(10px); box-shadow: var(--bloom);
+            width: 100%; padding: 14px 30px; border-radius: 50px; border: 1px solid var(--cyan);
+            background: rgba(0, 0, 0, 0.6); color: #fff; outline: none;
+            backdrop-filter: blur(15px); box-shadow: var(--bloom);
+            font-family: inherit; text-align: center; letter-spacing: 2px; transition: 0.3s;
+        }
+        .search-bar:focus { box-shadow: 0 0 30px var(--cyan); border-color: #fff; }
+
+        /* --- CONTROL CENTER --- */
+        #control-center {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--cyan);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 15px 0;
+        }
+        .mode-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--cyan);
+            padding: 10px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 1.2rem;
+        }
+        .mode-btn:hover {
+            background: var(--cyan);
+            color: #000;
+            box-shadow: var(--bloom);
+        }
+        .glow-text { text-shadow: var(--bloom); font-weight: bold; }
+        .system-stats {
+            text-align: center;
+        }
+        .stat-bar {
+            height: 5px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+        .fill { height: 100%; background: var(--cyan); border-radius: 4px; }
+
+        /* --- SIDE DOCK --- */
+        #side-dock {
+            position: fixed;
+            right: -200px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 250px;
+            background: rgba(0, 20, 30, 0.9);
+            border: 1px solid var(--cyan);
+            border-radius: 15px 0 0 15px;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 5000;
+            backdrop-filter: blur(10px);
+        }
+        #side-dock:hover { right: 0; }
+        .dock-trigger {
+            position: absolute;
+            left: -40px;
+            top: 20px;
+            background: var(--cyan);
+            color: #000;
+            padding: 10px;
+            border-radius: 8px 0 0 8px;
+            cursor: pointer;
+        }
+        .dock-content { padding: 20px; color: #fff; }
+        .dock-item { 
+            padding: 10px; 
+            margin: 5px 0; 
+            cursor: pointer; 
+            border-radius: 5px; 
+            transition: 0.3s;
+            font-size: 14px;
+        }
+        .dock-item:hover { background: rgba(0, 242, 255, 0.2); }
+
+        /* --- STORAGE DASHBOARD --- */
+        #storage-dashboard {
+            background: rgba(0, 242, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        .savings-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            margin-bottom: 10px;
+        }
+        .progress-container {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            display: flex;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .device-usage { background: #ff3366; }
+        .server-usage { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+        .storage-stats { display: flex; justify-content: space-between; }
+        .stat small { font-size: 8px; opacity: 0.6; }
+        .stat p { font-size: 12px; margin: 0; font-weight: bold; }
+
+        /* --- BG SELECTOR --- */
+        .bg-selector {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #bg-input {
+            padding: 10px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: #fff;
+            border-radius: 8px;
+        }
+        .bg-selector button {
+            background: var(--cyan);
+            color: #000;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
         }
 
         /* --- APP GRID --- */
         #app-wrapper {
-            width: 100%; padding: 20px; display: flex; flex-wrap: wrap; justify-content: center; 
-            gap: 25px; overflow-y: auto; max-height: 50vh; scrollbar-width: none;
+            width: 100%; padding: 20px 5%; display: flex; flex-wrap: wrap; justify-content: center; 
+            gap: 35px; overflow-y: auto; max-height: 45vh;
+            scrollbar-width: none; 
         }
+        #app-wrapper::-webkit-scrollbar { display: none; } 
         .app-icon { 
-            width: 80px; display: flex; flex-direction: column; align-items: center; 
-            cursor: pointer; transition: var(--transition);
+            width: 110px; display: flex; flex-direction: column; align-items: center; 
+            cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         }
-        .app-icon:hover { transform: scale(1.1); }
+        .app-icon:hover { transform: scale(1.15) translateY(-5px); }
         .icon-box { 
-            width: 60px; height: 60px; border: 2px solid var(--border); border-radius: 16px;
-            display: flex; justify-content: center; align-items: center; font-size: 28px;
-            background: rgba(0,0,0,0.5); margin-bottom: 8px; backdrop-filter: blur(5px);
+            width: 70px; height: 70px; border: 2px solid var(--border); border-radius: 18px;
+            display: flex; justify-content: center; align-items: center; font-size: 32px;
+            background: rgba(0,0,0,0.7); margin-bottom: 10px; backdrop-filter: blur(5px);
         }
 
-        /* --- HOLO-FRAMES (Windows) --- */
+        /* --- APP CARD (FOR INSTALLS) --- */
+        .app-card {
+            width: 280px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(15px);
+            transition: 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+        .app-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--cyan);
+            box-shadow: 0 10px 30px rgba(0, 242, 255, 0.2);
+        }
+        .app-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 9px;
+            background: var(--cyan);
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .app-icon-large {
+            font-size: 50px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .app-info h4 { color: #fff; margin: 0 0 5px; letter-spacing: 1px; }
+        .app-info p { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 15px; }
+        .app-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--cyan);
+            margin-bottom: 15px;
+        }
+        .install-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .install-btn:hover {
+            background: var(--cyan);
+            color: #000;
+        }
+
+        /* --- HOLOFRAMES --- */
         #desktop-manager { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
         .holoframe {
-            position: absolute; top: 15%; left: 5%; width: 90%; height: 70%; 
-            border: 1px solid var(--cyan); border-radius: 12px;
-            background: rgba(5, 10, 15, 0.95); backdrop-filter: blur(20px);
-            box-shadow: 0 0 60px rgba(0, 242, 255, 0.15); pointer-events: auto;
-            display: flex; flex-direction: column; overflow: hidden;
-            animation: spawn 0.3s ease-out;
+            position: absolute; top: 15%; left: 15%; width: 75%; height: 70%; 
+            border: 2px solid var(--cyan); border-radius: 12px;
+            background: var(--glass); backdrop-filter: blur(30px);
+            box-shadow: 0 0 60px rgba(0, 242, 255, 0.25); pointer-events: auto;
+            overflow: hidden; display: flex; flex-direction: column;
+            transition: opacity 0.2s, transform 0.2s;
         }
-        @keyframes spawn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
         .holo-header {
-            padding: 10px; display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border);
+            padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); cursor: move; user-select: none;
         }
-        .win-title { font-size: 10px; font-weight: bold; letter-spacing: 1px; }
-        .win-controls button { background: none; border: none; color: var(--cyan); margin-left: 10px; font-size: 14px; }
-        iframe { width: 100%; height: 100%; border: none; background: #fff; }
+        .window-controls { display: flex; align-items: center; flex: 1; }
+        .internal-address-bar { 
+            background: rgba(0,0,0,0.5); border: 1px solid var(--border); 
+            color: var(--cyan); font-family: monospace; font-size: 10px;
+            padding: 4px 10px; width: 65%; border-radius: 4px; outline: none; margin-left: 10px;
+        }
+        .action-btns { display: flex; gap: 12px; align-items: center; }
+        .nav-btn, .min-btn, .close-btn { cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.2s; }
+        .close-btn { color: #ff3366; }
+        .nav-btn:hover { text-shadow: var(--bloom); }
+        .iframe-wrapper { flex: 1; background: #000; }
+        iframe { width: 100%; height: 100%; border: none; }
 
-        /* --- GAME MODE OVERLAY --- */
-        .game-console-overlay {
-            position: fixed; inset: 0; background: #000; z-index: 25000;
-            display: flex; flex-direction: column;
+        /* --- HISTORY & DOCK --- */
+        #history-panel {
+            position: fixed; top: 0; left: -320px; width: 320px; height: 100%;
+            background: rgba(5, 10, 15, 0.95); border-right: 1px solid var(--border);
+            backdrop-filter: blur(25px); z-index: 3000; transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .game-hud {
-            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); padding: 5px 20px; border-radius: 0 0 10px 10px;
-            border: 1px solid var(--cyan); border-top: none;
-            opacity: 0; transition: 0.3s;
+        #history-panel.open { left: 0; }
+        #history-trigger {
+            position: fixed; top: 50%; left: 0; transform: translateY(-50%);
+            width: 25px; height: 80px; background: var(--glass); border: 1px solid var(--border);
+            border-radius: 0 15px 15px 0; cursor: pointer; z-index: 2900; 
+            display: flex; align-items: center; justify-content: center; color: var(--cyan);
+            user-select: none;
         }
-        .game-console-overlay:hover .game-hud { opacity: 1; }
-
-        /* --- APEX DOCK --- */
-        #apex-dock {
+        .dock {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(20px);
-            padding: 12px 25px; border-radius: 24px; border: 1px solid var(--glass);
-            display: flex; gap: 20px; z-index: 1000; transition: transform 0.5s ease;
+            display: flex; gap: 15px; padding: 12px 30px;
+            background: rgba(0,0,0,0.85); border: 1px solid var(--border);
+            border-radius: 50px; backdrop-filter: blur(15px); z-index: 500;
         }
-        .dock-icon { font-size: 24px; cursor: pointer; transition: 0.3s; }
-        .dock-icon:hover { transform: scale(1.2) translateY(-5px); }
-        
-        /* Game Mode hides dock */
-        body.gaming-active #apex-dock { transform: translate(-50%, 200%); }
-
+        .dock-btn { cursor:pointer; font-size: 11px; letter-spacing: 1px; color: var(--cyan); transition: 0.3s; }
+        .dock-btn:hover { color: #fff; text-shadow: var(--bloom); }
     </style>
 </head>
 <body>
 
-    <div id="olympus-boot">
-        <video id="boot-video" autoplay muted playsinline>
-            <source src="assets/boot-video.mp4" type="video/mp4">
-            </video>
-        <div class="boot-loader"><div id="loader-fill"></div></div>
+    <!-- Background Container -->
+    <div id="apex-background-container">
+        <div id="image-bg"></div>
+        <video id="video-bg" autoplay loop muted playsinline></video>
+        <div id="bg-overlay"></div>
     </div>
 
-    <div id="registration-screen">
-        <div class="reg-card">
-            <h3>INITIALIZE IDENTITY</h3>
-            <p style="font-size: 10px; opacity: 0.7;">CREATE YOUR 4-DIGIT PIN</p>
-            <input type="password" id="reg-pin" class="reg-input" maxlength="4" placeholder="••••">
-            <button onclick="completeRegistration()" style="background:var(--cyan); border:none; padding:10px 20px; font-weight:bold;">CONFIRM</button>
+    <!-- Boot Screen -->
+    <div id="olympus-boot-screen">
+        <video id="boot-video" autoplay loop muted playsinline>
+            <source src="https://files.catbox.moe/5xh10y.mp4" type="video/mp4">
+        </video>
+        <div class="loader-container">
+            <div id="loader-progress"></div>
         </div>
     </div>
 
-    <div id="artemis-desktop">
-        <video id="bg-layer" autoplay loop muted playsinline src="https://files.catbox.moe/u31ms9.mp4"></video>
-
-        <header id="system-header">
-            <div class="meta-row">
-                <span>OLYMPUS CLOUD</span>
-                <span id="clock">00:00</span>
-                <span>APEX: ACTIVE</span>
+    <!-- Global Search Overlay -->
+    <div id="global-search-overlay">
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="global-search-input" placeholder="Search Olympus Ecosystem..." autocomplete="off">
             </div>
-            <input type="text" class="search-bar" placeholder="EXECUTE NEURAL COMMAND..." onkeypress="handleSearch(event)">
-        </header>
-
-        <main id="app-wrapper"></main>
-        <div id="desktop-manager"></div>
-
-        <div id="apex-dock">
-            <div class="dock-icon" title="Apple Mode" onclick="switchMode('APPLE')">🍎</div>
-            <div class="dock-icon" title="Linux Mode" onclick="switchMode('LINUX')">🐧</div>
-            <div class="dock-icon" title="Windows Mode" onclick="switchMode('MICROSOFT')">🪟</div>
-            <div class="dock-icon" title="Artemis Mode" onclick="switchMode('ARTEMIS')">🏹</div>
-            <div class="dock-icon" title="Gyro" onclick="toggleGyro()">🧭</div>
+            <div id="search-results"></div>
         </div>
     </div>
 
-    <script>
-        // --- CONFIGURATION ---
-        const systems = {
-            APPLE: { color: "#ffffff", bg: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=1080&q=80", font: "-apple-system" },
-            LINUX: { color: "#39ff14", bg: "https://cdn.pixabay.com/video/2021/08/20/85732-590457611_tiny.mp4", font: "monospace" },
-            MICROSOFT: { color: "#00a4ef", bg: "https://images.unsplash.com/photo-1635326445090-67f139618175?w=1080&q=80", font: "Segoe UI" },
-            ARTEMIS: { color: "#00f2ff", bg: "https://files.catbox.moe/u31ms9.mp4", font: "Courier New" }
-        };
+    <!-- System Header -->
+    <header id="system-header">
+        <div class="meta-row">
+            <div class="meta-item">ARCHIVE: <span id="cur-date">--/--/--</span></div>
+            <div class="meta-item">CHRONO: <span id="cur-time">00:00:00</span></div>
+            <div class="meta-item">STATUS: <span id="cur-traffic">APEX ACTIVE</span></div>
+        </div>
+        <div class="search-container">
+            <form id="neural-search-form" onsubmit="executeNeuralSearch(event)">
+                <input type="text" id="search-input" class="search-bar" placeholder="EXECUTE NEURAL COMMAND...">
+            </form>
+        </div>
+    </header>
 
-        const apps = [
-            { name: "NEXUS HUB", url: "nexus.html", icon: "🧬" },
-            { name: "Spotify", url: "https://open.spotify.com", icon: "🎧" },
-            { name: "Discord", url: "https://discord.com/app", icon: "🎮" },
-            { name: "GeForce Now", url: "https://play.geforcenow.com", icon: "🕹️" },
-            { name: "ChatGPT", url: "https://chat.openai.com", icon: "🧠" },
-            { name: "Instagram", url: "https://instagram.com", icon: "📸" }
-        ];
+    <!-- Control Center -->
+    <div id="control-center">
+        <div class="status-row">
+            <span class="status-label">IDENTITY:</span>
+            <span id="active-mode-display" class="glow-text">ARTEMIS</span>
+        </div>
+        <div class="mode-grid">
+            <button class="mode-btn" onclick="switchMode('ARTEMIS')">Ω</button>
+            <button class="mode-btn" onclick="switchMode('APPLE')"></button>
+            <button class="mode-btn" onclick="switchMode('LINUX')">🐧</button>
+            <button class="mode-btn" onclick="switchMode('MICROSOFT')">⊞</button>
+        </div>
+        <div class="system-stats">
+            <div class="stat-bar"><div class="fill" style="width: 40%;"></div></div>
+            <small>NEURAL LOAD: 40%</small>
+        </div>
+    </div>
 
-        let gyroEnabled = false;
+    <!-- Side Dock -->
+    <div id="side-dock">
+        <div class="dock-trigger">📂</div>
+        <div class="dock-content">
+            <h3>APEX APPS</h3>
+            <div class="dock-item" onclick="spawnFrame('https://www.tiktok.com', 'TIKTOK', '#ff0050')">🎵 TikTok</div>
+            <div class="dock-item" onclick="spawnFrame('https://www.google.com/docs', 'DOCS', '#4285f4')">📄 Google Docs</div>
+            <div class="dock-item" onclick="spawnFrame('https://www.spotify.com', 'SPOTIFY', '#1DB954')">🎧 Spotify</div>
+            <hr>
+            <h3>MY STORAGE</h3>
+            <div class="dock-item">📁 Documents</div>
+            <div class="dock-item">🎬 Media</div>
+        </div>
+    </div>
 
-        // --- BOOT SEQUENCE ---
-        window.onload = () => {
-            // Check Identity
-            const identity = localStorage.getItem('olympus_identity');
-            
-            // Fill Loader
-            document.getElementById('loader-fill').style.width = '100%';
+    <!-- Storage Dashboard -->
+    <div id="storage-dashboard">
+        <div class="savings-header">
+            <span class="glow-text">APEX VIRTUAL STORAGE</span>
+            <span id="save-percentage">98% CLEAR</span>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar device-usage" style="width: 2%;"></div>
+            <div class="progress-bar server-usage" style="width: 98%;"></div>
+        </div>
+        <div class="storage-stats">
+            <div class="stat">
+                <small>DEVICE</small>
+                <p>12 MB</p>
+            </div>
+            <div class="stat" style="text-align: right;">
+                <small>SERVER (SAVED)</small>
+                <p id="total-saved">42.5 GB</p>
+            </div>
+        </div>
+    </div>
 
-            setTimeout(() => {
-                document.getElementById('olympus-boot').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('olympus-boot').style.display = 'none';
-                    
-                    if (!identity) {
-                        // First Time User -> Show Registration
-                        document.getElementById('registration-screen').style.display = 'flex';
-                    } else {
-                        // Returning User -> Welcome Back
-                        renderApps();
-                    }
-                }, 1000);
-            }, 3500); // 3.5s Boot Time
+    <!-- BG Selector -->
+    <div class="bg-selector">
+        <h4>CUSTOM BACKGROUND</h4>
+        <input type="text" id="bg-input" placeholder="Paste image or video URL...">
+        <button onclick="applyCustomBg()">APPLY TO THIS MODE</button>
+    </div>
 
-            updateClock();
-            setInterval(updateClock, 1000);
-        };
+    <!-- App Wrapper (for installed apps) -->
+    <main id="app-wrapper"></main>
+    <div id="desktop-manager"></div>
 
-        function completeRegistration() {
-            const pin = document.getElementById('reg-pin').value;
-            if (pin.length === 4) {
-                localStorage.setItem('olympus_identity', JSON.stringify({ pin: pin, created: Date.now() }));
-                document.getElementById('registration-screen').style.opacity = '0';
-                setTimeout(() => { 
-                    document.getElementById('registration-screen').style.display = 'none'; 
-                    renderApps();
-                }, 500);
-            }
+    <!-- History Panel -->
+    <div id="history-panel">
+        <div style="padding:40px 25px; font-size:16px; letter-spacing:5px; border-bottom:1px solid var(--border);">HERITAGE LEDGER</div>
+        <div id="history-list" style="padding:10px; overflow-y:auto; height:calc(100% - 120px);"></div>
+    </div>
+    <div id="history-trigger" onclick="toggleHistory(event)">☰</div>
+
+    <!-- Bottom Dock -->
+    <div class="dock">
+        <div class="dock-btn" onclick="spawnFrame('https://artemis-hub.vercel.app/', 'NEXUS HUB', '#00f2ff')">[ ACCESS NEXUS ]</div>
+    </div>
+
+<script>
+    // --- SYSTEMS CONFIG ---
+    const systems = {
+        ARTEMIS: { 
+            color: "#00f2ff", font: "Courier New", defaultBg: "https://cdn.pixabay.com/video/2023/10/20/185834-876615024_tiny.mp4",
+            apps: [
+                { name: "NEXUS HUB", url: "https://artemis-hub.vercel.app/", icon: "🧬" },
+                { name: "ARCHITECT", url: "https://architect-artemis.vercel.app/", icon: "📐" }
+            ]
+        },
+        APPLE: { 
+            color: "#ffffff", font: "-apple-system, sans-serif", defaultBg: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop",
+            apps: [
+                { name: "ICLOUD", url: "https://www.icloud.com", icon: "☁️" },
+                { name: "APPLE MUSIC", url: "https://music.apple.com", icon: "🎵" }
+            ]
+        },
+        LINUX: { 
+            color: "#39ff14", font: "monospace", defaultBg: "https://cdn.pixabay.com/video/2021/08/20/85732-590457611_tiny.mp4",
+            apps: [
+                { name: "TERMINAL", url: "https://web-terminal.io", icon: "🐚" },
+                { name: "GITHUB", url: "https://github.com", icon: "🐙" }
+            ]
+        },
+        MICROSOFT: { 
+            color: "#00a4ef", font: "Segoe UI, sans-serif", defaultBg: "https://images.unsplash.com/photo-1635326445090-67f139618175?q=80&w=2070&auto=format&fit=crop",
+            apps: [
+                { name: "ONEDRIVE", url: "https://onedrive.live.com", icon: "☁️" },
+                { name: "TEAMS", url: "https://teams.microsoft.com", icon: "👥" }
+            ]
         }
+    };
 
-        // --- SYSTEM ENGINE ---
-        function switchMode(mode) {
-            const config = systems[mode];
+    // --- PRE-INSTALLED APPS ---
+    const preInstalledApps = [
+        { name: "Gmail", url: "https://mail.google.com", icon: "gmail-icon.png" },
+        { name: "TikTok", url: "https://www.tiktok.com", icon: "tiktok-icon.png" }
+    ];
+
+    // --- GLOBAL VARIABLES ---
+    let threads = [];
+    let historyData = JSON.parse(localStorage.getItem('artemis_history') || "[]");
+    let currentMode = localStorage.getItem('artemis-mode') || 'ARTEMIS';
+
+    // --- BOOT SEQUENCE ---
+    window.addEventListener('load', () => {
+        const progress = document.getElementById('loader-progress');
+        const bootScreen = document.getElementById('olympus-boot-screen');
+
+        setTimeout(() => {
+            progress.style.width = '100%';
+        }, 100);
+
+        setTimeout(() => {
+            bootScreen.style.opacity = '0';
+            setTimeout(() => {
+                bootScreen.style.display = 'none';
+                initArtemisEnvironment();
+            }, 2000);
+        }, 3500);
+    });
+
+    function initArtemisEnvironment() {
+        switchMode(currentMode);
+        renderHistory();
+        updateStorageStats();
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('cur-date').innerText = now.toLocaleDateString();
+            document.getElementById('cur-time').innerText = now.toLocaleTimeString();
+        }, 1000);
+    }
+
+    // --- MODE SWITCHING ---
+    function switchMode(modeName) {
+        const config = systems[modeName];
+        if (!config) return;
+
+        document.body.style.filter = "brightness(0)";
+
+        setTimeout(() => {
+            // Visual Shift
             document.documentElement.style.setProperty('--cyan', config.color);
             document.body.style.fontFamily = config.font;
-            
-            const bg = document.getElementById('bg-layer');
-            if (config.bg.includes('mp4')) {
-                bg.src = config.bg;
-                bg.play();
-            } else {
-                bg.src = ""; // Clear video
-                bg.poster = config.bg; // Use poster for image
-                bg.style.background = `url(${config.bg}) center/cover`;
+            document.getElementById('active-mode-display').innerText = modeName;
+
+            // Background Update
+            const settings = JSON.parse(localStorage.getItem('apex-os-settings') || "{}");
+            const activeBg = settings[modeName]?.background || config.defaultBg;
+            updateOSBackground(modeName, activeBg);
+
+            // App Ecosystem Shift
+            renderDockApps(modeName);
+
+            // Persistence
+            localStorage.setItem('artemis-mode', modeName);
+            currentMode = modeName;
+
+            console.log(`[SYS] Environment reconfigured: ${modeName} protocols active.`);
+            document.body.style.filter = "brightness(1)";
+        }, 400);
+    }
+
+    // --- BACKGROUND HANDLING ---
+    function updateOSBackground(modeName, fileUrl) {
+        const videoEl = document.getElementById('video-bg');
+        const imageEl = document.getElementById('image-bg');
+        
+        const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(fileUrl);
+
+        if (isVideo) {
+            imageEl.style.opacity = '0';
+            videoEl.src = fileUrl;
+            videoEl.style.opacity = '1';
+            videoEl.play().catch(e => console.log("Autoplay blocked, waiting for interaction"));
+        } else {
+            videoEl.style.opacity = '0';
+            imageEl.style.backgroundImage = `url(${fileUrl})`;
+            imageEl.style.backgroundSize = 'cover';
+            imageEl.style.backgroundPosition = 'center';
+            imageEl.style.opacity = '1';
+        }
+
+        saveBackgroundPreference(modeName, fileUrl);
+    }
+
+    function saveBackgroundPreference(mode, url) {
+        let settings = JSON.parse(localStorage.getItem('apex-os-settings') || "{}");
+        if (!settings[mode]) settings[mode] = {};
+        settings[mode].background = url;
+        localStorage.setItem('apex-os-settings', JSON.stringify(settings));
+    }
+
+    function applyCustomBg() {
+        const url = document.getElementById('bg-input').value;
+        if (url) {
+            updateOSBackground(currentMode, url);
+            alert(`Background updated for ${currentMode} mode!`);
+        }
+    }
+
+    // --- DOCK RENDERING ---
+    function renderDockApps(modeName) {
+        const dockContent = document.querySelector('.dock-content');
+        const appList = systems[modeName].apps;
+        
+        dockContent.innerHTML = `<h3>${modeName} APPS</h3>`;
+        
+        appList.forEach(app => {
+            const item = document.createElement('div');
+            item.className = 'dock-item';
+            item.innerHTML = `${app.icon} ${app.name}`;
+            item.onclick = () => spawnFrame(app.url, app.name, systems[modeName].color);
+            dockContent.appendChild(item);
+        });
+
+        // Add user-installed apps
+        renderUserDock();
+    }
+
+    function renderUserDock() {
+        // Implement if needed for user-installed apps in dock
+    }
+
+    // --- APP INSTALLATION ---
+    function installToArtemis(name, url, icon) {
+        let myApps = JSON.parse(localStorage.getItem('apex-installed-apps') || "[]");
+        
+        if (myApps.some(a => a.url === url)) return alert("App already in OS.");
+
+        myApps.push({ name, url, icon, mode: currentMode });
+        
+        localStorage.setItem('apex-installed-apps', JSON.stringify(myApps));
+        
+        console.log(`[SECURITY] Biometric verification for ${name} install...`);
+        
+        renderDockApps(currentMode);
+        updateStorageStats();
+    }
+
+    // --- STORAGE STATS ---
+    function updateStorageStats() {
+        const myApps = JSON.parse(localStorage.getItem('apex-installed-apps') || "[]");
+        
+        const estimatedSavedMB = myApps.length * 150; 
+        const savedGB = (estimatedSavedMB / 1024).toFixed(1);
+        
+        document.getElementById('total-saved').innerText = `${savedGB} GB`;
+        
+        const serverBar = document.querySelector('.server-usage');
+        serverBar.style.opacity = Math.min(0.3 + (myApps.length * 0.1), 1);
+    }
+
+    // --- DOCUMENT OPENING ---
+    function openDocument(fileUrl, fileName) {
+        const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+        spawnFrame(viewerUrl, fileName, '#4285f4');
+    }
+
+    // --- MESSAGE LISTENER FOR NEXUS HUB ---
+    window.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'spawn_frame') {
+            const { url, name } = event.data;
+            spawnFrame(url, name || "EXTERNAL LINK", '#00f2ff'); 
+            logHistory(name || "EXTERNAL LINK", url, '#00f2ff');
+        }
+    });
+
+    // --- GLOBAL CLICK LISTENER ---
+    document.addEventListener('click', (e) => {
+        const historyPanel = document.getElementById('history-panel');
+        const historyTrigger = document.getElementById('history-trigger');
+        
+        if (historyPanel.classList.contains('open')) {
+            if (!historyPanel.contains(e.target) && !historyTrigger.contains(e.target)) {
+                historyPanel.classList.remove('open');
             }
         }
 
-        function renderApps() {
-            const wrapper = document.getElementById('app-wrapper');
-            wrapper.innerHTML = '';
-            apps.forEach(app => {
-                const div = document.createElement('div');
-                div.className = 'app-icon';
-                div.innerHTML = `<div class="icon-box">${app.icon}</div><span style="font-size:10px;">${app.name}</span>`;
-                div.onclick = () => spawnFrame(app.url, app.name);
-                wrapper.appendChild(div);
-            });
+        const isInterface = e.target.closest('#system-header') || 
+                            e.target.closest('.dock') || 
+                            e.target.closest('.app-icon') || 
+                            e.target.closest('.holoframe') ||
+                            e.target.closest('#history-panel') ||
+                            e.target.closest('#history-trigger') ||
+                            e.target.closest('#side-dock') ||
+                            e.target.closest('#control-center') ||
+                            e.target.closest('#storage-dashboard') ||
+                            e.target.closest('#global-search-overlay');
+
+        if (!isInterface) {
+            minimizeAllThreads();
+        }
+    });
+
+    function minimizeAllThreads() {
+        threads.forEach(t => {
+            const el = document.getElementById(t.id);
+            if (el && el.style.display !== 'none') {
+                minimizeThread(t.id, t.name);
+            }
+        });
+    }
+
+    // --- OLYMPUS APPS ---
+    const apps = [
+        { name: "R.E.M.", url: "https://rem-psi-mauve.vercel.app/", color: "#bc13fe", icon: "👁️" },
+        { name: "Aetheris", url: "https://aetheris-business-model.vercel.app/", color: "#00f2ff", icon: "🔱" },
+        { name: "Tracker", url: "https://olympus-aetheris.vercel.app/", color: "#7df9ff", icon: "🛰️" },
+        { name: "Hoodies", url: "https://olympus-lac.vercel.app/", color: "#ffd700", icon: "👕" },
+        { name: "Nexus", url: "https://nexus-symbiote.onrender.com/", color: "#39ff14", icon: "🧬" },
+        { name: "The Pearl", url: "https://axiom-repository.vercel.app/", color: "#f0f0f0", icon: "⚪" },
+        { name: "Architect", url: "https://architect-artemis.vercel.app/", color: "#ff00ff", icon: "📐" },
+        { name: "Dutchman", url: "https://the-flying-dutchman.vercel.app/", color: "#005f73", icon: "⚓" },
+        { name: "Starblood", url: "https://starblood.vercel.app/", color: "#ff0000", icon: "🩸" },
+        { name: "Titan Fall", url: "https://mega-city-liard.vercel.app/", color: "#ff8c00", icon: "🤖" },
+        { name: "Finances", url: "https://olympian-finances.vercel.app/", color: "#2ecc71", icon: "⚖️" },
+        { name: "Gully", url: "https://grief-gully.vercel.app/", color: "#581845", icon: "💀" },
+        { name: "Contact", url: "https://georgia-aquarium.vercel.app/", color: "#3498db", icon: "📧" }
+    ];
+
+    const wrapper = document.getElementById('app-wrapper');
+    apps.forEach(app => {
+        const div = document.createElement('div');
+        div.className = 'app-icon';
+        div.innerHTML = `<div class="icon-box" style="border-color:${app.color}">${app.icon}</div><span style="font-size:10px; color:${app.color}">${app.name}</span>`;
+        div.onclick = (e) => { 
+            e.stopPropagation(); 
+            spawnFrame(app.url, app.name, app.color); 
+            logHistory(app.name, app.url, app.color); 
+        };
+        wrapper.appendChild(div);
+    });
+
+    // --- SPAWN FRAME ---
+    function spawnFrame(url, name, color) {
+        const id = 'thread-' + Date.now();
+        let finalUrl = url;
+        if (url.includes('google.com/search') && !url.includes('igu=1')) {
+            finalUrl += '&igu=1';
         }
 
-        function spawnFrame(url, title) {
-            // GAME MODE CHECK
-            if (url.includes('geforcenow') || url.includes('xbox')) {
-                launchGameMode(url, title);
-                return;
-            }
-
-            const id = 'win-' + Date.now();
-            const win = document.createElement('div');
-            win.className = 'holoframe';
-            win.id = id;
-            win.innerHTML = `
-                <div class="holo-header">
-                    <span class="win-title">${title}</span>
-                    <div class="win-controls">
-                        <button onclick="snapWindow('${id}')">◧</button>
-                        <button onclick="document.getElementById('${id}').remove()">✕</button>
+        const markup = `
+            <div class="holoframe" id="${id}" style="border-color:${color};">
+                <div class="holo-header" style="background:${color}11">
+                    <div class="window-controls">
+                        <span style="color:${color}; font-weight:bold; font-size: 11px;">${name}</span>
+                        <input type="text" class="internal-address-bar" id="addr-${id}" value="${url}" 
+                               onkeypress="if(event.key==='Enter') navigateInternal('${id}')">
+                    </div>
+                    <div class="action-btns">
+                        <span class="nav-btn" onclick="navBack('${id}')">[←]</span>
+                        <span class="nav-btn" onclick="navForward('${id}')">[→]</span>
+                        <span class="min-btn" style="color:${color}" onclick="minimizeThread('${id}', '${name}')">[_]</span>
+                        <span class="close-btn" onclick="terminateThread('${id}')">[X]</span>
                     </div>
                 </div>
-                <iframe src="${url}" sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe>
-            `;
-            
-            // DRAG LOGIC
-            makeDraggable(win);
-            document.getElementById('desktop-manager').appendChild(win);
-        }
-
-        // --- GAME MODE ---
-        function launchGameMode(url, title) {
-            document.body.classList.add('gaming-active');
-            const overlay = document.createElement('div');
-            overlay.className = 'game-console-overlay';
-            overlay.id = 'active-session';
-            overlay.innerHTML = `
-                <div class="game-hud">
-                    <span>${title} • CLOUD STREAM</span>
-                    <button onclick="exitGameMode()" style="background:red; color:white; border:none; margin-left:10px;">EXIT</button>
+                <div class="iframe-wrapper">
+                    <iframe id="iframe-${id}" src="${finalUrl}" allow="fullscreen"></iframe>
                 </div>
-                <iframe src="${url}" allow="gamepad; autoplay; fullscreen"></iframe>
-            `;
-            document.body.appendChild(overlay);
-            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
-            
-            // Disable Gyro in Game Mode
-            if(gyroEnabled) toggleGyro(); 
-        }
+            </div>`;
+        
+        document.getElementById('desktop-manager').insertAdjacentHTML('beforeend', markup);
+        threads.push({ id, name, color });
+        
+        const el = document.getElementById(id);
+        makeDraggable(el);
+        el.onmousedown = (e) => {
+            e.stopPropagation(); 
+            focusThread(id);
+        };
+        focusThread(id);
+    }
 
-        function exitGameMode() {
-            document.getElementById('active-session').remove();
-            document.body.classList.remove('gaming-active');
-            if (document.exitFullscreen) document.exitFullscreen();
-        }
+    function navigateInternal(id) {
+        const input = document.getElementById(`addr-${id}`);
+        const iframe = document.getElementById(`iframe-${id}`);
+        let url = input.value.trim();
+        if (!url.startsWith('http')) url = 'https://' + url;
+        iframe.src = url;
+    }
 
-        // --- UTILITIES ---
-        function makeDraggable(el) {
-            let isDragging = false, startX, startY;
-            const header = el.querySelector('.holo-header');
-            header.onmousedown = e => {
-                isDragging = true;
-                startX = e.clientX - el.offsetLeft;
-                startY = e.clientY - el.offsetTop;
-                el.style.zIndex = 1000; // Bring to front
-            };
-            document.onmousemove = e => {
-                if (isDragging) {
-                    el.style.left = (e.clientX - startX) + 'px';
-                    el.style.top = (e.clientY - startY) + 'px';
-                }
-            };
-            document.onmouseup = () => isDragging = false;
-        }
-
-        function toggleGyro() {
-            gyroEnabled = !gyroEnabled;
-            if (gyroEnabled && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission();
-            }
-            if(gyroEnabled) {
-                window.addEventListener('deviceorientation', handleGyro);
-                alert("GYRO: ON");
-            } else {
-                window.removeEventListener('deviceorientation', handleGyro);
-                document.getElementById('bg-layer').style.transform = "none";
-                alert("GYRO: OFF");
-            }
-        }
-
-        function handleGyro(e) {
-            const x = e.gamma / 5; // Tilt Left/Right
-            const y = e.beta / 5;  // Tilt Front/Back
-            document.getElementById('bg-layer').style.transform = `scale(1.1) translate(${x}px, ${y}px)`;
-        }
-
-        function handleSearch(e) {
-            if (e.key === 'Enter') {
-                const q = e.target.value;
-                spawnFrame(`https://www.google.com/search?q=${encodeURIComponent(q)}&igu=1`, 'SEARCH: ' + q);
-                e.target.value = '';
-            }
-        }
-
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        }
-
-        // Listen for Messages from Nexus Hub
-        window.addEventListener('message', (event) => {
-            if (event.data.type === 'spawn_frame') {
-                spawnFrame(event.data.url, event.data.name);
-            }
+    function focusThread(id) {
+        threads.forEach(t => {
+            const el = document.getElementById(t.id);
+            if(el) el.style.zIndex = 1000;
         });
+        const target = document.getElementById(id);
+        if(target) target.style.zIndex = 2000;
+    }
 
-        // Controller Detection
-        window.addEventListener("gamepadconnected", (e) => {
-            alert(`HARDWARE DETECTED: ${e.gamepad.id}`);
+    function minimizeThread(id, name) {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.style.display = 'none';
+        
+        if (!document.querySelector(`[data-restore="${id}"]`)) {
+            const dock = document.querySelector('.dock');
+            const btn = document.createElement('div');
+            btn.className = 'dock-btn';
+            btn.setAttribute('data-restore', id);
+            btn.innerText = `[ ${name} ]`;
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                el.style.display = 'flex';
+                focusThread(id);
+                btn.remove();
+            };
+            dock.appendChild(btn);
+        }
+    }
+
+    function terminateThread(id) {
+        const el = document.getElementById(id);
+        if(el) el.remove();
+        threads = threads.filter(t => t.id !== id);
+        const dockBtn = document.querySelector(`[data-restore="${id}"]`);
+        if(dockBtn) dockBtn.remove();
+    }
+
+    function navBack(id) { try { document.getElementById(`iframe-${id}`).contentWindow.history.back(); } catch(e) {} }
+    function navForward(id) { try { document.getElementById(`iframe-${id}`).contentWindow.history.forward(); } catch(e) {} }
+
+    function makeDraggable(el) {
+        let isDragging = false, startX, startY;
+        const header = el.querySelector('.holo-header');
+        header.onmousedown = e => {
+            if(e.target.tagName === 'INPUT' || e.target.classList.contains('nav-btn') || e.target.classList.contains('min-btn') || e.target.classList.contains('close-btn')) return;
+            isDragging = true; 
+            startX = e.clientX - el.offsetLeft; 
+            startY = e.clientY - el.offsetTop;
+            focusThread(el.id);
+        };
+        document.onmousemove = e => { 
+            if (isDragging) { 
+                el.style.left = (e.clientX - startX) + 'px'; 
+                el.style.top = (e.clientY - startY) + 'px'; 
+            } 
+        };
+        document.onmouseup = () => isDragging = false;
+    }
+
+    // --- NEURAL SEARCH ---
+    function executeNeuralSearch(e) {
+        e.preventDefault();
+        const input = document.getElementById('search-input');
+        const q = input.value.trim();
+        if (q) {
+            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(q)}&igu=1`;
+            spawnFrame(searchUrl, q.toUpperCase(), "#fff");
+            logHistory(q.toUpperCase(), searchUrl, "#fff");
+            input.value = '';
+        }
+    }
+
+    // --- HISTORY ---
+    function toggleHistory(e) { e.stopPropagation(); document.getElementById('history-panel').classList.toggle('open'); }
+    
+    function logHistory(name, url, color) {
+        historyData.unshift({ name, url, color, timestamp: new Date().toLocaleTimeString() });
+        if (historyData.length > 20) historyData.pop();
+        localStorage.setItem('artemis_history', JSON.stringify(historyData));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        historyData.forEach(entry => {
+            const div = document.createElement('div');
+            div.style = `padding:12px; margin-bottom:5px; border:1px solid ${entry.color}33; cursor:pointer; background:rgba(255,255,255,0.02); border-radius:4px;`;
+            div.innerHTML = `<div style="font-size:11px; color:${entry.color}">${entry.name}</div><div style="font-size:9px; opacity:0.4;">${entry.timestamp}</div>`;
+            div.onclick = (e) => { 
+                e.stopPropagation();
+                spawnFrame(entry.url, entry.name, entry.color);
+            };
+            list.appendChild(div);
         });
+    }
 
-    </script>
+    // --- GLOBAL SEARCH (Truncated implementation - expand as needed) ---
+    function performSearch(query) {
+        const resultsContainer = document.getElementById('search-results');
+        resultsContainer.innerHTML = ''; // Clear previous
+        // Implement search logic here, e.g., filter apps or history
+        // For example:
+        const results = apps.filter(app => app.name.toLowerCase().includes(query.toLowerCase()));
+        results.forEach(result => {
+            const div = document.createElement('div');
+            div.innerText = result.name;
+            div.onclick = () => spawnFrame(result.url, result.name, result.color);
+            resultsContainer.appendChild(div);
+        });
+    }
+
+    // Trigger global search (e.g., via hotkey or button - add as needed)
+    document.getElementById('global-search-input').addEventListener('input', (e) => performSearch(e.target.value));
+
+    // Show overlay (example: add a trigger in UI)
+    // document.addEventListener('keydown', (e) => { if (e.key === '/') document.getElementById('global-search-overlay').style.display = 'flex'; });
+
+</script>
 </body>
 </html>
