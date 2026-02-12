@@ -1,0 +1,31 @@
+# --- IDENTITY & SECURITY (CRITICAL) ---
+# Never commit your private API keys or secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- SYSTEM & OS JUNK ---
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- DEPENDENCIES ---
+# Don't track the thousands of small files in node_modules
+node_modules/
+dist/
+.cache/
+
+# --- VERCEL / HUB DEPLOYMENT ---
+.vercel
+.next/
+out/
+
+# --- LOCAL STORAGE & DB REPLICAS ---
+# If you ever export your local 'Identity Packets' for testing
+*.json_backup
+local_db/
