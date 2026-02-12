@@ -1,961 +1,277 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARTEMIS • APEX HERITAGE</title>
-    <style>
-        :root { 
-            --cyan: #00f2ff; 
-            --glass: rgba(0, 15, 25, 0.7); 
-            --border: rgba(0, 242, 255, 0.4); 
-            --bloom: 0 0 20px rgba(0, 242, 255, 0.5);
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+    <title>ARTEMIS • APEX HERITAGE</title> 
+    <link rel="manifest" href="./manifest.json"> 
+    <meta name="apple-mobile-web-app-capable" content="yes"> 
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
+    <meta name="theme-color" content="#00f2ff"> 
+    <style> 
+        :root { --cyan: #00f2ff; --glass: rgba(0, 15, 25, 0.72); --border: rgba(0, 242, 255, 0.42); --bloom: 0 0 20px rgba(0, 242, 255, 0.55); } 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; } 
+        body, html { margin:0; padding:0; width:100%; height:100vh; overflow:hidden; background: #000; font-family: 'Courier New', monospace; color: var(--cyan); touch-action: manipulation; } 
+        #apex-background-container { position:fixed; inset:0; z-index:-10; background:#000; overflow:hidden; } 
+        #image-bg, #video-bg { position:absolute; inset:0; width: 100%; height: 100%; object-fit:cover; transition:opacity 0.8s; filter:brightness(0.6) contrast(1.2); } 
+        #bg-overlay { position:absolute; inset:0; background:radial-gradient(circle, transparent 20%, rgba(0,0,0,0.65) 100%); z-index:-5; } 
         
-        /* Transparent body to show video/image background */
-        body, html { margin:0; padding:0; width:100%; height:100vh; overflow:hidden; background: transparent; font-family: 'Courier New', monospace; color: var(--cyan); transition: background 0.8s ease-in-out, filter 0.5s ease; }
-        
-        /* --- BACKGROUND CONTAINER --- */
-        #apex-background-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -10;
-            overflow: hidden;
-            background: #000;
-        }
-        #image-bg, #video-bg {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            height: 100%;
-            transform: translate(-50%, -50%);
-            object-fit: cover;
-            transition: opacity 0.8s ease-in-out;
-            filter: brightness(0.6) contrast(1.2);
-        }
-        #bg-overlay {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.6) 100%);
-            z-index: -5; pointer-events: none;
-        }
+        /* Boot Screen */
+        #olympus-boot-screen { position:fixed; inset:0; background:#000; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:opacity 2s ease-in-out; } 
+        #boot-video { width:300px; margin-bottom:30px; filter:drop-shadow(0 0 20px rgba(0,242,255,0.4)); } 
+        .loader-container { width:200px; height:2px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; } 
+        #loader-progress { width:0; height:100%; background:#fff; box-shadow:0 0 10px #fff; transition:width 3.5s cubic-bezier(0.4,0,0.2,1); } 
 
-        /* --- BOOT SCREEN --- */
-        #olympus-boot-screen {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 2s ease-in-out;
-        }
-        #boot-video {
-            width: 300px;
-            margin-bottom: 30px;
-            filter: drop-shadow(0 0 20px rgba(0, 242, 255, 0.4));
-        }
-        .loader-container {
-            width: 200px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        #loader-progress {
-            width: 0%;
-            height: 100%;
-            background: #fff;
-            box-shadow: 0 0 10px #fff;
-            transition: width 3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        /* Modals & Overlays */
+        #language-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); z-index: 12000; display: none; align-items: center; justify-content: center; padding: 20px; } 
+        .lang-container { background: rgba(10,15,20,0.95); border: 1px solid var(--cyan); border-radius: 20px; max-width: 450px; width: 100%; padding: 30px; box-shadow: 0 0 50px rgba(0,242,255,0.3); } 
+        .lang-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; } 
+        .lang-btn { background: rgba(0,242,255,0.08); border: 1px solid rgba(0,242,255,0.3); color: var(--cyan); padding: 14px 8px; border-radius: 10px; cursor: pointer; transition: 0.25s; } 
+        .lang-btn.active { background: var(--cyan); color: #000; }
+        .confirm-btn { width:100%; margin-top: 20px; padding: 15px; background: var(--cyan); color: #000; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; opacity: 0.5; }
+        .confirm-btn:not(:disabled) { opacity: 1; }
 
-        /* --- GLOBAL SEARCH OVERLAY --- */
-        #global-search-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            display: none;
-            justify-content: center;
-            align-items: flex-start;
-            padding-top: 15vh;
-            z-index: 11000;
-        }
-        .search-container {
-            width: 90%;
-            max-width: 600px;
-            background: rgba(20, 20, 25, 0.95);
-            border: 1px solid var(--cyan);
-            border-radius: 12px;
-            box-shadow: 0 0 40px rgba(0, 242, 255, 0.2);
-            overflow: hidden;
-        }
-        .search-input-wrapper {
-            display: flex;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid rgba(0, 242, 255, 0.1);
-        }
-        #global-search-input {
-            background: transparent;
-            border: none;
-            outline: none;
-            color: #fff;
-            font-size: 1.2rem;
-            width: 100%;
-            margin-left: 15px;
-        }
-        #search-results { padding: 20px; color: #fff; }
+        /* UI Elements */
+        #system-header { width: 100%; padding: 25px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 100; } 
+        .meta-row { display: flex; gap: 40px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; } 
+        .search-bar { width: 100%; max-width: 600px; padding: 14px 30px; border-radius: 50px; border: 1px solid var(--cyan); background: rgba(0,0,0,0.6); color: #fff; text-align: center; backdrop-filter: blur(15px); } 
 
-        /* --- SYSTEM HEADER --- */
-        #system-header {
-            width: 100%; padding: 25px; display: flex; flex-direction: column; align-items: center; gap: 20px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 100;
-            backdrop-filter: blur(2px);
-        }
-        .meta-row { display: flex; gap: 40px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-shadow: var(--bloom); }
-        .meta-item span { color: #fff; font-weight: bold; }
-
-        .search-container { width: 100%; max-width: 650px; position: relative; }
-        .search-bar {
-            width: 100%; padding: 14px 30px; border-radius: 50px; border: 1px solid var(--cyan);
-            background: rgba(0, 0, 0, 0.6); color: #fff; outline: none;
-            backdrop-filter: blur(15px); box-shadow: var(--bloom);
-            font-family: inherit; text-align: center; letter-spacing: 2px; transition: 0.3s;
-        }
-        .search-bar:focus { box-shadow: 0 0 30px var(--cyan); border-color: #fff; }
-
-        /* --- CONTROL CENTER --- */
-        #control-center {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--cyan);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-        }
-        .mode-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin: 15px 0;
-        }
-        .mode-btn {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--cyan);
-            padding: 10px 0;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 1.2rem;
-        }
-        .mode-btn:hover {
-            background: var(--cyan);
-            color: #000;
-            box-shadow: var(--bloom);
-        }
-        .glow-text { text-shadow: var(--bloom); font-weight: bold; }
-        .system-stats {
-            text-align: center;
-        }
-        .stat-bar {
-            height: 5px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            margin-bottom: 5px;
-        }
-        .fill { height: 100%; background: var(--cyan); border-radius: 4px; }
-
-        /* --- SIDE DOCK --- */
-        #side-dock {
-            position: fixed;
-            right: -200px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 250px;
-            background: rgba(0, 20, 30, 0.9);
-            border: 1px solid var(--cyan);
-            border-radius: 15px 0 0 15px;
-            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 5000;
-            backdrop-filter: blur(10px);
-        }
-        #side-dock:hover { right: 0; }
-        .dock-trigger {
-            position: absolute;
-            left: -40px;
-            top: 20px;
-            background: var(--cyan);
-            color: #000;
-            padding: 10px;
-            border-radius: 8px 0 0 8px;
-            cursor: pointer;
-        }
-        .dock-content { padding: 20px; color: #fff; }
-        .dock-item { 
-            padding: 10px; 
-            margin: 5px 0; 
-            cursor: pointer; 
-            border-radius: 5px; 
-            transition: 0.3s;
-            font-size: 14px;
-        }
-        .dock-item:hover { background: rgba(0, 242, 255, 0.2); }
-
-        /* --- STORAGE DASHBOARD --- */
-        #storage-dashboard {
-            background: rgba(0, 242, 255, 0.05);
-            border: 1px solid var(--border);
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 20px;
-        }
-        .savings-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            margin-bottom: 10px;
-        }
-        .progress-container {
-            height: 8px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            display: flex;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-        .device-usage { background: #ff3366; }
-        .server-usage { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
-        .storage-stats { display: flex; justify-content: space-between; }
-        .stat small { font-size: 8px; opacity: 0.6; }
-        .stat p { font-size: 12px; margin: 0; font-weight: bold; }
-
-        /* --- BG SELECTOR --- */
-        .bg-selector {
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        #bg-input {
-            padding: 10px;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: #fff;
-            border-radius: 8px;
-        }
-        .bg-selector button {
-            background: var(--cyan);
-            color: #000;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        /* --- APP GRID --- */
-        #app-wrapper {
-            width: 100%; padding: 20px 5%; display: flex; flex-wrap: wrap; justify-content: center; 
-            gap: 35px; overflow-y: auto; max-height: 45vh;
-            scrollbar-width: none; 
-        }
-        #app-wrapper::-webkit-scrollbar { display: none; } 
-        .app-icon { 
-            width: 110px; display: flex; flex-direction: column; align-items: center; 
-            cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
-        .app-icon:hover { transform: scale(1.15) translateY(-5px); }
-        .icon-box { 
-            width: 70px; height: 70px; border: 2px solid var(--border); border-radius: 18px;
-            display: flex; justify-content: center; align-items: center; font-size: 32px;
-            background: rgba(0,0,0,0.7); margin-bottom: 10px; backdrop-filter: blur(5px);
-        }
-
-        /* --- APP CARD (FOR INSTALLS) --- */
-        .app-card {
-            width: 280px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(0, 242, 255, 0.2);
-            border-radius: 20px;
-            padding: 20px;
-            backdrop-filter: blur(15px);
-            transition: 0.4s;
-            position: relative;
-            overflow: hidden;
-        }
-        .app-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--cyan);
-            box-shadow: 0 10px 30px rgba(0, 242, 255, 0.2);
-        }
-        .app-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 9px;
-            background: var(--cyan);
-            color: #000;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .app-icon-large {
-            font-size: 50px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .app-info h4 { color: #fff; margin: 0 0 5px; letter-spacing: 1px; }
-        .app-info p { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 15px; }
-        .app-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: var(--cyan);
-            margin-bottom: 15px;
-        }
-        .install-btn {
-            width: 100%;
-            padding: 12px;
-            background: transparent;
-            border: 1px solid var(--cyan);
-            color: var(--cyan);
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-        .install-btn:hover {
-            background: var(--cyan);
-            color: #000;
-        }
-
-        /* --- HOLOFRAMES --- */
-        #desktop-manager { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
-        .holoframe {
-            position: absolute; top: 15%; left: 15%; width: 75%; height: 70%; 
-            border: 2px solid var(--cyan); border-radius: 12px;
-            background: var(--glass); backdrop-filter: blur(30px);
-            box-shadow: 0 0 60px rgba(0, 242, 255, 0.25); pointer-events: auto;
-            overflow: hidden; display: flex; flex-direction: column;
-            transition: opacity 0.2s, transform 0.2s;
-        }
-        .holo-header {
-            padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border); cursor: move; user-select: none;
-        }
-        .window-controls { display: flex; align-items: center; flex: 1; }
-        .internal-address-bar { 
-            background: rgba(0,0,0,0.5); border: 1px solid var(--border); 
-            color: var(--cyan); font-family: monospace; font-size: 10px;
-            padding: 4px 10px; width: 65%; border-radius: 4px; outline: none; margin-left: 10px;
-        }
-        .action-btns { display: flex; gap: 12px; align-items: center; }
-        .nav-btn, .min-btn, .close-btn { cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.2s; }
-        .close-btn { color: #ff3366; }
-        .nav-btn:hover { text-shadow: var(--bloom); }
-        .iframe-wrapper { flex: 1; background: #000; }
+        /* Windows (Holoframes) */
+        #desktop-manager { position: fixed; inset: 0; z-index: 50; pointer-events: none; } 
+        .holoframe { position: absolute; min-width: 300px; min-height: 200px; border: 2px solid var(--cyan); border-radius: 12px; background: var(--glass); backdrop-filter: blur(30px); pointer-events: auto; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 40px rgba(0,242,255,0.2); } 
+        .holo-header { padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; cursor: move; background: rgba(0,0,0,0.4); } 
+        .iframe-wrapper { flex: 1; background: #000; } 
         iframe { width: 100%; height: 100%; border: none; }
+        .close-btn { color: #ff3366; cursor: pointer; font-weight: bold; margin-left: 15px; }
 
-        /* --- HISTORY & DOCK --- */
-        #history-panel {
-            position: fixed; top: 0; left: -320px; width: 320px; height: 100%;
-            background: rgba(5, 10, 15, 0.95); border-right: 1px solid var(--border);
-            backdrop-filter: blur(25px); z-index: 3000; transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        /* Bottom Controls & Apps */
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; height: 75vh; background: rgba(5,10,15,0.98); border-top: 1px solid var(--cyan); z-index: 700; transform: translateY(calc(100% - 60px)); transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); } 
+        .bottom-sheet.expanded { transform: translateY(0); } 
+        .sheet-handle { padding: 15px; cursor: pointer; display: flex; justify-content: center; background: rgba(0,242,255,0.1); }
+        .handle-bar { width: 50px; height: 4px; background: var(--cyan); border-radius: 10px; }
+        #app-wrapper { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 40px; overflow-y: auto; }
+        .app-icon { width: 90px; text-align: center; cursor: pointer; }
+        .icon-box { width: 60px; height: 60px; border: 1px solid var(--border); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 8px; }
+
+        /* Side & Dock */
+        .dock { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; padding: 10px 25px; background: rgba(0,0,0,0.8); border: 1px solid var(--border); border-radius: 50px; z-index: 600; }
+        #history-panel { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: rgba(5,10,15,0.95); border-right: 1px solid var(--border); z-index: 3000; transition: 0.4s; }
         #history-panel.open { left: 0; }
-        #history-trigger {
-            position: fixed; top: 50%; left: 0; transform: translateY(-50%);
-            width: 25px; height: 80px; background: var(--glass); border: 1px solid var(--border);
-            border-radius: 0 15px 15px 0; cursor: pointer; z-index: 2900; 
-            display: flex; align-items: center; justify-content: center; color: var(--cyan);
-            user-select: none;
-        }
-        .dock {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 15px; padding: 12px 30px;
-            background: rgba(0,0,0,0.85); border: 1px solid var(--border);
-            border-radius: 50px; backdrop-filter: blur(15px); z-index: 500;
-        }
-        .dock-btn { cursor:pointer; font-size: 11px; letter-spacing: 1px; color: var(--cyan); transition: 0.3s; }
-        .dock-btn:hover { color: #fff; text-shadow: var(--bloom); }
-    </style>
-</head>
-<body>
+    </style> 
+</head> 
+<body> 
 
-    <!-- Background Container -->
-    <div id="apex-background-container">
-        <div id="image-bg"></div>
-        <video id="video-bg" autoplay loop muted playsinline></video>
-        <div id="bg-overlay"></div>
-    </div>
+    <div id="apex-background-container"> 
+        <div id="image-bg"></div> 
+        <video id="video-bg" autoplay loop muted playsinline></video> 
+        <div id="bg-overlay"></div> 
+    </div> 
 
-    <!-- Boot Screen -->
-    <div id="olympus-boot-screen">
-        <video id="boot-video" autoplay loop muted playsinline>
-            <source src="https://files.catbox.moe/5xh10y.mp4" type="video/mp4">
-        </video>
-        <div class="loader-container">
-            <div id="loader-progress"></div>
-        </div>
-    </div>
+    <div id="olympus-boot-screen"> 
+        <video id="boot-video" autoplay loop muted playsinline> 
+            <source src="https://files.catbox.moe/5xh10y.mp4" type="video/mp4"> 
+        </video> 
+        <div class="loader-container"> <div id="loader-progress"></div> </div> 
+    </div> 
 
-    <!-- Global Search Overlay -->
-    <div id="global-search-overlay">
-        <div class="search-container">
-            <div class="search-input-wrapper">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="global-search-input" placeholder="Search Olympus Ecosystem..." autocomplete="off">
-            </div>
-            <div id="search-results"></div>
-        </div>
-    </div>
+    <div id="language-modal"> 
+        <div class="lang-container"> 
+            <div class="lang-title" style="text-align:center; letter-spacing:3px;">SELECT SYSTEM LANGUAGE</div> 
+            <div class="lang-grid" id="lang-grid"></div> 
+            <button class="confirm-btn" id="confirm-lang" disabled>CONFIRM INITIALIZATION</button> 
+        </div> 
+    </div> 
 
-    <!-- System Header -->
-    <header id="system-header">
-        <div class="meta-row">
-            <div class="meta-item">ARCHIVE: <span id="cur-date">--/--/--</span></div>
-            <div class="meta-item">CHRONO: <span id="cur-time">00:00:00</span></div>
-            <div class="meta-item">STATUS: <span id="cur-traffic">APEX ACTIVE</span></div>
-        </div>
-        <div class="search-container">
-            <form id="neural-search-form" onsubmit="executeNeuralSearch(event)">
-                <input type="text" id="search-input" class="search-bar" placeholder="EXECUTE NEURAL COMMAND...">
-            </form>
-        </div>
-    </header>
+    <header id="system-header"> 
+        <div class="meta-row"> 
+            <div>ARCHIVE: <span id="cur-date">--/--/--</span></div> 
+            <div>CHRONO: <span id="cur-time">00:00:00</span></div> 
+        </div> 
+        <form id="neural-search-form" onsubmit="executeNeuralSearch(event)" style="width:100%; display:flex; justify-content:center;"> 
+            <input type="text" id="search-input" class="search-bar" placeholder="EXECUTE NEURAL COMMAND..."> 
+        </form> 
+    </header> 
 
-    <!-- Control Center -->
-    <div id="control-center">
-        <div class="status-row">
-            <span class="status-label">IDENTITY:</span>
-            <span id="active-mode-display" class="glow-text">ARTEMIS</span>
-        </div>
-        <div class="mode-grid">
-            <button class="mode-btn" onclick="switchMode('ARTEMIS')">Ω</button>
-            <button class="mode-btn" onclick="switchMode('APPLE')"></button>
-            <button class="mode-btn" onclick="switchMode('LINUX')">🐧</button>
-            <button class="mode-btn" onclick="switchMode('MICROSOFT')">⊞</button>
-        </div>
-        <div class="system-stats">
-            <div class="stat-bar"><div class="fill" style="width: 40%;"></div></div>
-            <small>NEURAL LOAD: 40%</small>
-        </div>
-    </div>
+    <div id="desktop-manager"></div> 
 
-    <!-- Side Dock -->
-    <div id="side-dock">
-        <div class="dock-trigger">📂</div>
-        <div class="dock-content">
-            <h3>APEX APPS</h3>
-            <div class="dock-item" onclick="spawnFrame('https://www.tiktok.com', 'TIKTOK', '#ff0050')">🎵 TikTok</div>
-            <div class="dock-item" onclick="spawnFrame('https://www.google.com/docs', 'DOCS', '#4285f4')">📄 Google Docs</div>
-            <div class="dock-item" onclick="spawnFrame('https://www.spotify.com', 'SPOTIFY', '#1DB954')">🎧 Spotify</div>
-            <hr>
-            <h3>MY STORAGE</h3>
-            <div class="dock-item">📁 Documents</div>
-            <div class="dock-item">🎬 Media</div>
-        </div>
-    </div>
+    <div id="bottom-controls-sheet" class="bottom-sheet"> 
+        <div class="sheet-handle" onclick="toggleSheet()"><div class="handle-bar"></div></div> 
+        <div class="sheet-content">
+            <main id="app-wrapper"></main> 
+        </div> 
+    </div> 
 
-    <!-- Storage Dashboard -->
-    <div id="storage-dashboard">
-        <div class="savings-header">
-            <span class="glow-text">APEX VIRTUAL STORAGE</span>
-            <span id="save-percentage">98% CLEAR</span>
-        </div>
-        <div class="progress-container">
-            <div class="progress-bar device-usage" style="width: 2%;"></div>
-            <div class="progress-bar server-usage" style="width: 98%;"></div>
-        </div>
-        <div class="storage-stats">
-            <div class="stat">
-                <small>DEVICE</small>
-                <p>12 MB</p>
-            </div>
-            <div class="stat" style="text-align: right;">
-                <small>SERVER (SAVED)</small>
-                <p id="total-saved">42.5 GB</p>
-            </div>
-        </div>
-    </div>
+    <div class="dock"> 
+        <div class="dock-btn" onclick="spawnFrame('https://artemis-hub.vercel.app/', 'NEXUS HUB', '#00f2ff')">[ ACCESS NEXUS ]</div> 
+        <div class="dock-btn" onclick="toggleHistory()">[ LEDGER ]</div>
+    </div> 
 
-    <!-- BG Selector -->
-    <div class="bg-selector">
-        <h4>CUSTOM BACKGROUND</h4>
-        <input type="text" id="bg-input" placeholder="Paste image or video URL...">
-        <button onclick="applyCustomBg()">APPLY TO THIS MODE</button>
-    </div>
-
-    <!-- App Wrapper (for installed apps) -->
-    <main id="app-wrapper"></main>
-    <div id="desktop-manager"></div>
-
-    <!-- History Panel -->
     <div id="history-panel">
-        <div style="padding:40px 25px; font-size:16px; letter-spacing:5px; border-bottom:1px solid var(--border);">HERITAGE LEDGER</div>
-        <div id="history-list" style="padding:10px; overflow-y:auto; height:calc(100% - 120px);"></div>
-    </div>
-    <div id="history-trigger" onclick="toggleHistory(event)">☰</div>
-
-    <!-- Bottom Dock -->
-    <div class="dock">
-        <div class="dock-btn" onclick="spawnFrame('https://artemis-hub.vercel.app/', 'NEXUS HUB', '#00f2ff')">[ ACCESS NEXUS ]</div>
+        <div style="padding:30px; border-bottom:1px solid var(--border);">HISTORY</div>
+        <div id="history-list"></div>
     </div>
 
-<script>
-    // --- SYSTEMS CONFIG ---
-    const systems = {
-        ARTEMIS: { 
-            color: "#00f2ff", font: "Courier New", defaultBg: "https://cdn.pixabay.com/video/2023/10/20/185834-876615024_tiny.mp4",
-            apps: [
-                { name: "NEXUS HUB", url: "https://artemis-hub.vercel.app/", icon: "🧬" },
-                { name: "ARCHITECT", url: "https://architect-artemis.vercel.app/", icon: "📐" }
-            ]
-        },
-        APPLE: { 
-            color: "#ffffff", font: "-apple-system, sans-serif", defaultBg: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop",
-            apps: [
-                { name: "ICLOUD", url: "https://www.icloud.com", icon: "☁️" },
-                { name: "APPLE MUSIC", url: "https://music.apple.com", icon: "🎵" }
-            ]
-        },
-        LINUX: { 
-            color: "#39ff14", font: "monospace", defaultBg: "https://cdn.pixabay.com/video/2021/08/20/85732-590457611_tiny.mp4",
-            apps: [
-                { name: "TERMINAL", url: "https://web-terminal.io", icon: "🐚" },
-                { name: "GITHUB", url: "https://github.com", icon: "🐙" }
-            ]
-        },
-        MICROSOFT: { 
-            color: "#00a4ef", font: "Segoe UI, sans-serif", defaultBg: "https://images.unsplash.com/photo-1635326445090-67f139618175?q=80&w=2070&auto=format&fit=crop",
-            apps: [
-                { name: "ONEDRIVE", url: "https://onedrive.live.com", icon: "☁️" },
-                { name: "TEAMS", url: "https://teams.microsoft.com", icon: "👥" }
-            ]
-        }
-    };
+    <script> 
+        // --- GLOBALS ---
+        const systems = { 
+            ARTEMIS: { color: "#00f2ff", font: "Courier New", defaultBg: "https://cdn.pixabay.com/video/2023/10/20/185834-876615024_tiny.mp4" }
+        };
+        let threads = [];
+        let historyData = JSON.parse(localStorage.getItem('artemis_history') || "[]");
+        let currentMode = 'ARTEMIS';
 
-    // --- PRE-INSTALLED APPS ---
-    const preInstalledApps = [
-        { name: "Gmail", url: "https://mail.google.com", icon: "gmail-icon.png" },
-        { name: "TikTok", url: "https://www.tiktok.com", icon: "tiktok-icon.png" }
-    ];
-
-    // --- GLOBAL VARIABLES ---
-    let threads = [];
-    let historyData = JSON.parse(localStorage.getItem('artemis_history') || "[]");
-    let currentMode = localStorage.getItem('artemis-mode') || 'ARTEMIS';
-
-    // --- BOOT SEQUENCE ---
-    window.addEventListener('load', () => {
-        const progress = document.getElementById('loader-progress');
-        const bootScreen = document.getElementById('olympus-boot-screen');
-
-        setTimeout(() => {
-            progress.style.width = '100%';
-        }, 100);
-
-        setTimeout(() => {
-            bootScreen.style.opacity = '0';
+        // --- BOOT LOGIC ---
+        window.addEventListener('load', () => {
+            const progress = document.getElementById('loader-progress');
+            const bootScreen = document.getElementById('olympus-boot-screen');
+            setTimeout(() => progress.style.width = '100%', 100);
             setTimeout(() => {
-                bootScreen.style.display = 'none';
-                initArtemisEnvironment();
-            }, 2000);
-        }, 3500);
-    });
+                bootScreen.style.opacity = '0';
+                setTimeout(() => { 
+                    bootScreen.style.display = 'none'; 
+                    showLanguageSelector(); 
+                }, 2000);
+            }, 3800);
+        });
 
-    function initArtemisEnvironment() {
-        switchMode(currentMode);
-        renderHistory();
-        updateStorageStats();
-        setInterval(() => {
+        function showLanguageSelector() {
+            const modal = document.getElementById('language-modal');
+            const grid = document.getElementById('lang-grid');
+            const languages = [{code:"en", name:"English"}, {code:"ja", name:"日本語"}, {code:"es", name:"Español"}];
+            
+            languages.forEach(lang => {
+                const btn = document.createElement('button');
+                btn.className = 'lang-btn';
+                btn.textContent = lang.name;
+                btn.onclick = () => {
+                    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('confirm-lang').disabled = false;
+                };
+                grid.appendChild(btn);
+            });
+
+            document.getElementById('confirm-lang').onclick = () => {
+                modal.style.display = 'none';
+                initOS();
+            };
+            modal.style.display = 'flex';
+        }
+
+        function initOS() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            updateOSBackground('ARTEMIS', systems.ARTEMIS.defaultBg);
+            renderApps();
+            renderHistory();
+        }
+
+        function updateClock() {
             const now = new Date();
             document.getElementById('cur-date').innerText = now.toLocaleDateString();
             document.getElementById('cur-time').innerText = now.toLocaleTimeString();
-        }, 1000);
-    }
-
-    // --- MODE SWITCHING ---
-    function switchMode(modeName) {
-        const config = systems[modeName];
-        if (!config) return;
-
-        document.body.style.filter = "brightness(0)";
-
-        setTimeout(() => {
-            // Visual Shift
-            document.documentElement.style.setProperty('--cyan', config.color);
-            document.body.style.fontFamily = config.font;
-            document.getElementById('active-mode-display').innerText = modeName;
-
-            // Background Update
-            const settings = JSON.parse(localStorage.getItem('apex-os-settings') || "{}");
-            const activeBg = settings[modeName]?.background || config.defaultBg;
-            updateOSBackground(modeName, activeBg);
-
-            // App Ecosystem Shift
-            renderDockApps(modeName);
-
-            // Persistence
-            localStorage.setItem('artemis-mode', modeName);
-            currentMode = modeName;
-
-            console.log(`[SYS] Environment reconfigured: ${modeName} protocols active.`);
-            document.body.style.filter = "brightness(1)";
-        }, 400);
-    }
-
-    // --- BACKGROUND HANDLING ---
-    function updateOSBackground(modeName, fileUrl) {
-        const videoEl = document.getElementById('video-bg');
-        const imageEl = document.getElementById('image-bg');
-        
-        const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(fileUrl);
-
-        if (isVideo) {
-            imageEl.style.opacity = '0';
-            videoEl.src = fileUrl;
-            videoEl.style.opacity = '1';
-            videoEl.play().catch(e => console.log("Autoplay blocked, waiting for interaction"));
-        } else {
-            videoEl.style.opacity = '0';
-            imageEl.style.backgroundImage = `url(${fileUrl})`;
-            imageEl.style.backgroundSize = 'cover';
-            imageEl.style.backgroundPosition = 'center';
-            imageEl.style.opacity = '1';
         }
 
-        saveBackgroundPreference(modeName, fileUrl);
-    }
-
-    function saveBackgroundPreference(mode, url) {
-        let settings = JSON.parse(localStorage.getItem('apex-os-settings') || "{}");
-        if (!settings[mode]) settings[mode] = {};
-        settings[mode].background = url;
-        localStorage.setItem('apex-os-settings', JSON.stringify(settings));
-    }
-
-    function applyCustomBg() {
-        const url = document.getElementById('bg-input').value;
-        if (url) {
-            updateOSBackground(currentMode, url);
-            alert(`Background updated for ${currentMode} mode!`);
+        // --- WINDOW ENGINE ---
+        function spawnFrame(url, name, color) {
+            const id = 'win-' + Date.now();
+            const html = `
+                <div class="holoframe" id="${id}" style="border-color:${color}; top:15vh; left:10vw; width:80vw; height:50vh; z-index:1000;">
+                    <div class="holo-header" style="border-bottom: 1px solid ${color}44">
+                        <span style="font-size:10px; color:${color}; font-weight:bold;">${name}</span>
+                        <div class="action-btns">
+                            <span class="close-btn" onclick="closeThread('${id}')">✕</span>
+                        </div>
+                    </div>
+                    <div class="iframe-wrapper">
+                        <iframe src="${url}" loading="lazy"></iframe>
+                    </div>
+                </div>`;
+            
+            document.getElementById('desktop-manager').insertAdjacentHTML('beforeend', html);
+            makeDraggable(document.getElementById(id));
+            threads.push({id, name});
+            logHistory(name, url, color);
         }
-    }
 
-    // --- DOCK RENDERING ---
-    function renderDockApps(modeName) {
-        const dockContent = document.querySelector('.dock-content');
-        const appList = systems[modeName].apps;
-        
-        dockContent.innerHTML = `<h3>${modeName} APPS</h3>`;
-        
-        appList.forEach(app => {
-            const item = document.createElement('div');
-            item.className = 'dock-item';
-            item.innerHTML = `${app.icon} ${app.name}`;
-            item.onclick = () => spawnFrame(app.url, app.name, systems[modeName].color);
-            dockContent.appendChild(item);
-        });
+        function makeDraggable(el) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            const header = el.querySelector('.holo-header');
+            header.onmousedown = dragStart;
+            header.ontouchstart = dragStart;
 
-        // Add user-installed apps
-        renderUserDock();
-    }
+            function dragStart(e) {
+                e.preventDefault();
+                pos3 = e.clientX || e.touches[0].clientX;
+                pos4 = e.clientY || e.touches[0].clientY;
+                document.onmouseup = dragEnd;
+                document.onmousemove = dragMove;
+                document.ontouchend = dragEnd;
+                document.ontouchmove = dragMove;
+            }
 
-    function renderUserDock() {
-        // Implement if needed for user-installed apps in dock
-    }
+            function dragMove(e) {
+                let cx = e.clientX || (e.touches ? e.touches[0].clientX : pos3);
+                let cy = e.clientY || (e.touches ? e.touches[0].clientY : pos4);
+                pos1 = pos3 - cx;
+                pos2 = pos4 - cy;
+                pos3 = cx;
+                pos4 = cy;
+                el.style.top = (el.offsetTop - pos2) + "px";
+                el.style.left = (el.offsetLeft - pos1) + "px";
+            }
 
-    // --- APP INSTALLATION ---
-    function installToArtemis(name, url, icon) {
-        let myApps = JSON.parse(localStorage.getItem('apex-installed-apps') || "[]");
-        
-        if (myApps.some(a => a.url === url)) return alert("App already in OS.");
-
-        myApps.push({ name, url, icon, mode: currentMode });
-        
-        localStorage.setItem('apex-installed-apps', JSON.stringify(myApps));
-        
-        console.log(`[SECURITY] Biometric verification for ${name} install...`);
-        
-        renderDockApps(currentMode);
-        updateStorageStats();
-    }
-
-    // --- STORAGE STATS ---
-    function updateStorageStats() {
-        const myApps = JSON.parse(localStorage.getItem('apex-installed-apps') || "[]");
-        
-        const estimatedSavedMB = myApps.length * 150; 
-        const savedGB = (estimatedSavedMB / 1024).toFixed(1);
-        
-        document.getElementById('total-saved').innerText = `${savedGB} GB`;
-        
-        const serverBar = document.querySelector('.server-usage');
-        serverBar.style.opacity = Math.min(0.3 + (myApps.length * 0.1), 1);
-    }
-
-    // --- DOCUMENT OPENING ---
-    function openDocument(fileUrl, fileName) {
-        const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
-        spawnFrame(viewerUrl, fileName, '#4285f4');
-    }
-
-    // --- MESSAGE LISTENER FOR NEXUS HUB ---
-    window.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'spawn_frame') {
-            const { url, name } = event.data;
-            spawnFrame(url, name || "EXTERNAL LINK", '#00f2ff'); 
-            logHistory(name || "EXTERNAL LINK", url, '#00f2ff');
-        }
-    });
-
-    // --- GLOBAL CLICK LISTENER ---
-    document.addEventListener('click', (e) => {
-        const historyPanel = document.getElementById('history-panel');
-        const historyTrigger = document.getElementById('history-trigger');
-        
-        if (historyPanel.classList.contains('open')) {
-            if (!historyPanel.contains(e.target) && !historyTrigger.contains(e.target)) {
-                historyPanel.classList.remove('open');
+            function dragEnd() {
+                document.onmouseup = null; document.onmousemove = null;
+                document.ontouchend = null; document.ontouchmove = null;
             }
         }
 
-        const isInterface = e.target.closest('#system-header') || 
-                            e.target.closest('.dock') || 
-                            e.target.closest('.app-icon') || 
-                            e.target.closest('.holoframe') ||
-                            e.target.closest('#history-panel') ||
-                            e.target.closest('#history-trigger') ||
-                            e.target.closest('#side-dock') ||
-                            e.target.closest('#control-center') ||
-                            e.target.closest('#storage-dashboard') ||
-                            e.target.closest('#global-search-overlay');
+        function closeThread(id) { document.getElementById(id).remove(); }
 
-        if (!isInterface) {
-            minimizeAllThreads();
-        }
-    });
+        // --- UI UTILS ---
+        function toggleSheet() { document.getElementById('bottom-controls-sheet').classList.toggle('expanded'); }
+        function toggleHistory() { document.getElementById('history-panel').classList.toggle('open'); }
 
-    function minimizeAllThreads() {
-        threads.forEach(t => {
-            const el = document.getElementById(t.id);
-            if (el && el.style.display !== 'none') {
-                minimizeThread(t.id, t.name);
-            }
-        });
-    }
-
-    // --- OLYMPUS APPS ---
-    const apps = [
-        { name: "R.E.M.", url: "https://rem-psi-mauve.vercel.app/", color: "#bc13fe", icon: "👁️" },
-        { name: "Aetheris", url: "https://aetheris-business-model.vercel.app/", color: "#00f2ff", icon: "🔱" },
-        { name: "Tracker", url: "https://olympus-aetheris.vercel.app/", color: "#7df9ff", icon: "🛰️" },
-        { name: "Hoodies", url: "https://olympus-lac.vercel.app/", color: "#ffd700", icon: "👕" },
-        { name: "Nexus", url: "https://nexus-symbiote.onrender.com/", color: "#39ff14", icon: "🧬" },
-        { name: "The Pearl", url: "https://axiom-repository.vercel.app/", color: "#f0f0f0", icon: "⚪" },
-        { name: "Architect", url: "https://architect-artemis.vercel.app/", color: "#ff00ff", icon: "📐" },
-        { name: "Dutchman", url: "https://the-flying-dutchman.vercel.app/", color: "#005f73", icon: "⚓" },
-        { name: "Starblood", url: "https://starblood.vercel.app/", color: "#ff0000", icon: "🩸" },
-        { name: "Titan Fall", url: "https://mega-city-liard.vercel.app/", color: "#ff8c00", icon: "🤖" },
-        { name: "Finances", url: "https://olympian-finances.vercel.app/", color: "#2ecc71", icon: "⚖️" },
-        { name: "Gully", url: "https://grief-gully.vercel.app/", color: "#581845", icon: "💀" },
-        { name: "Contact", url: "https://georgia-aquarium.vercel.app/", color: "#3498db", icon: "📧" }
-    ];
-
-    const wrapper = document.getElementById('app-wrapper');
-    apps.forEach(app => {
-        const div = document.createElement('div');
-        div.className = 'app-icon';
-        div.innerHTML = `<div class="icon-box" style="border-color:${app.color}">${app.icon}</div><span style="font-size:10px; color:${app.color}">${app.name}</span>`;
-        div.onclick = (e) => { 
-            e.stopPropagation(); 
-            spawnFrame(app.url, app.name, app.color); 
-            logHistory(app.name, app.url, app.color); 
-        };
-        wrapper.appendChild(div);
-    });
-
-    // --- SPAWN FRAME ---
-    function spawnFrame(url, name, color) {
-        const id = 'thread-' + Date.now();
-        let finalUrl = url;
-        if (url.includes('google.com/search') && !url.includes('igu=1')) {
-            finalUrl += '&igu=1';
+        function updateOSBackground(mode, url) {
+            const v = document.getElementById('video-bg');
+            v.src = url;
+            v.play();
         }
 
-        const markup = `
-            <div class="holoframe" id="${id}" style="border-color:${color};">
-                <div class="holo-header" style="background:${color}11">
-                    <div class="window-controls">
-                        <span style="color:${color}; font-weight:bold; font-size: 11px;">${name}</span>
-                        <input type="text" class="internal-address-bar" id="addr-${id}" value="${url}" 
-                               onkeypress="if(event.key==='Enter') navigateInternal('${id}')">
-                    </div>
-                    <div class="action-btns">
-                        <span class="nav-btn" onclick="navBack('${id}')">[←]</span>
-                        <span class="nav-btn" onclick="navForward('${id}')">[→]</span>
-                        <span class="min-btn" style="color:${color}" onclick="minimizeThread('${id}', '${name}')">[_]</span>
-                        <span class="close-btn" onclick="terminateThread('${id}')">[X]</span>
-                    </div>
-                </div>
-                <div class="iframe-wrapper">
-                    <iframe id="iframe-${id}" src="${finalUrl}" allow="fullscreen"></iframe>
-                </div>
-            </div>`;
-        
-        document.getElementById('desktop-manager').insertAdjacentHTML('beforeend', markup);
-        threads.push({ id, name, color });
-        
-        const el = document.getElementById(id);
-        makeDraggable(el);
-        el.onmousedown = (e) => {
-            e.stopPropagation(); 
-            focusThread(id);
-        };
-        focusThread(id);
-    }
-
-    function navigateInternal(id) {
-        const input = document.getElementById(`addr-${id}`);
-        const iframe = document.getElementById(`iframe-${id}`);
-        let url = input.value.trim();
-        if (!url.startsWith('http')) url = 'https://' + url;
-        iframe.src = url;
-    }
-
-    function focusThread(id) {
-        threads.forEach(t => {
-            const el = document.getElementById(t.id);
-            if(el) el.style.zIndex = 1000;
-        });
-        const target = document.getElementById(id);
-        if(target) target.style.zIndex = 2000;
-    }
-
-    function minimizeThread(id, name) {
-        const el = document.getElementById(id);
-        if(!el) return;
-        el.style.display = 'none';
-        
-        if (!document.querySelector(`[data-restore="${id}"]`)) {
-            const dock = document.querySelector('.dock');
-            const btn = document.createElement('div');
-            btn.className = 'dock-btn';
-            btn.setAttribute('data-restore', id);
-            btn.innerText = `[ ${name} ]`;
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                el.style.display = 'flex';
-                focusThread(id);
-                btn.remove();
-            };
-            dock.appendChild(btn);
+        function renderApps() {
+            const apps = [
+                { name: "Nexus", url: "https://artemis-hub.vercel.app/", icon: "🧬", color: "#00f2ff" },
+                { name: "Starblood", url: "https://starblood.vercel.app/", icon: "🩸", color: "#ff0000" },
+                { name: "Architect", url: "https://architect-artemis.vercel.app/", icon: "📐", color: "#ff00ff" }
+            ];
+            const container = document.getElementById('app-wrapper');
+            apps.forEach(app => {
+                const div = document.createElement('div');
+                div.className = 'app-icon';
+                div.innerHTML = `<div class="icon-box" style="border-color:${app.color}">${app.icon}</div><span style="font-size:10px;">${app.name}</span>`;
+                div.onclick = () => spawnFrame(app.url, app.name, app.color);
+                container.appendChild(div);
+            });
         }
-    }
 
-    function terminateThread(id) {
-        const el = document.getElementById(id);
-        if(el) el.remove();
-        threads = threads.filter(t => t.id !== id);
-        const dockBtn = document.querySelector(`[data-restore="${id}"]`);
-        if(dockBtn) dockBtn.remove();
-    }
-
-    function navBack(id) { try { document.getElementById(`iframe-${id}`).contentWindow.history.back(); } catch(e) {} }
-    function navForward(id) { try { document.getElementById(`iframe-${id}`).contentWindow.history.forward(); } catch(e) {} }
-
-    function makeDraggable(el) {
-        let isDragging = false, startX, startY;
-        const header = el.querySelector('.holo-header');
-        header.onmousedown = e => {
-            if(e.target.tagName === 'INPUT' || e.target.classList.contains('nav-btn') || e.target.classList.contains('min-btn') || e.target.classList.contains('close-btn')) return;
-            isDragging = true; 
-            startX = e.clientX - el.offsetLeft; 
-            startY = e.clientY - el.offsetTop;
-            focusThread(el.id);
-        };
-        document.onmousemove = e => { 
-            if (isDragging) { 
-                el.style.left = (e.clientX - startX) + 'px'; 
-                el.style.top = (e.clientY - startY) + 'px'; 
-            } 
-        };
-        document.onmouseup = () => isDragging = false;
-    }
-
-    // --- NEURAL SEARCH ---
-    function executeNeuralSearch(e) {
-        e.preventDefault();
-        const input = document.getElementById('search-input');
-        const q = input.value.trim();
-        if (q) {
-            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(q)}&igu=1`;
-            spawnFrame(searchUrl, q.toUpperCase(), "#fff");
-            logHistory(q.toUpperCase(), searchUrl, "#fff");
-            input.value = '';
+        function executeNeuralSearch(e) {
+            e.preventDefault();
+            const q = document.getElementById('search-input').value;
+            if(q) spawnFrame(`https://www.google.com/search?q=${encodeURIComponent(q)}&igu=1`, q.toUpperCase(), "#fff");
         }
-    }
 
-    // --- HISTORY ---
-    function toggleHistory(e) { e.stopPropagation(); document.getElementById('history-panel').classList.toggle('open'); }
-    
-    function logHistory(name, url, color) {
-        historyData.unshift({ name, url, color, timestamp: new Date().toLocaleTimeString() });
-        if (historyData.length > 20) historyData.pop();
-        localStorage.setItem('artemis_history', JSON.stringify(historyData));
-        renderHistory();
-    }
+        function logHistory(name, url, color) {
+            historyData.unshift({name, url, color, time: new Date().toLocaleTimeString()});
+            if(historyData.length > 10) historyData.pop();
+            localStorage.setItem('artemis_history', JSON.stringify(historyData));
+            renderHistory();
+        }
 
-    function renderHistory() {
-        const list = document.getElementById('history-list');
-        list.innerHTML = '';
-        historyData.forEach(entry => {
-            const div = document.createElement('div');
-            div.style = `padding:12px; margin-bottom:5px; border:1px solid ${entry.color}33; cursor:pointer; background:rgba(255,255,255,0.02); border-radius:4px;`;
-            div.innerHTML = `<div style="font-size:11px; color:${entry.color}">${entry.name}</div><div style="font-size:9px; opacity:0.4;">${entry.timestamp}</div>`;
-            div.onclick = (e) => { 
-                e.stopPropagation();
-                spawnFrame(entry.url, entry.name, entry.color);
-            };
-            list.appendChild(div);
-        });
-    }
-
-    // --- GLOBAL SEARCH (Truncated implementation - expand as needed) ---
-    function performSearch(query) {
-        const resultsContainer = document.getElementById('search-results');
-        resultsContainer.innerHTML = ''; // Clear previous
-        // Implement search logic here, e.g., filter apps or history
-        // For example:
-        const results = apps.filter(app => app.name.toLowerCase().includes(query.toLowerCase()));
-        results.forEach(result => {
-            const div = document.createElement('div');
-            div.innerText = result.name;
-            div.onclick = () => spawnFrame(result.url, result.name, result.color);
-            resultsContainer.appendChild(div);
-        });
-    }
-
-    // Trigger global search (e.g., via hotkey or button - add as needed)
-    document.getElementById('global-search-input').addEventListener('input', (e) => performSearch(e.target.value));
-
-    // Show overlay (example: add a trigger in UI)
-    // document.addEventListener('keydown', (e) => { if (e.key === '/') document.getElementById('global-search-overlay').style.display = 'flex'; });
-
-</script>
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = historyData.map(h => `<div style="padding:15px; border-bottom:1px solid rgba(0,242,255,0.1); font-size:10px; color:${h.color}">${h.name} <br> <span style="opacity:0.5">${h.time}</span></div>`).join('');
+        }
+    </script>
 </body>
 </html>
