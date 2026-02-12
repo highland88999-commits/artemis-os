@@ -2,11 +2,15 @@
   "name": "Artemis OS",
   "short_name": "Artemis",
   "description": "The Olympus Cloud Operating System",
+  "id": "/",
+  "scope": "/",
   "start_url": "/index.html",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#050a10",
   "theme_color": "#00f2ff",
-  "orientation": "portrait",
+  "orientation": "any",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "assets/artemis-icon-192.png",
