@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ARTEMIS • APEX HERITAGE</title>
-    <link rel="manifest" href="./manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#00f2ff">
     <style>
         :root { 
             --cyan: #00f2ff; 
@@ -17,921 +13,236 @@
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        body, html { margin:0; padding:0; width:100%; height:100vh; overflow:hidden; background: transparent; font-family: 'Courier New', monospace; color: var(--cyan); transition: background 0.8s ease-in-out, filter 0.5s ease; }
+        body, html { margin:0; padding:0; width:100%; height:100vh; overflow:hidden; background: #000; font-family: 'Courier New', monospace; color: var(--cyan); transition: filter 0.5s ease; }
         
-        #apex-background-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -10;
-            overflow: hidden;
-            background: #000;
-        }
-        #image-bg, #video-bg {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            height: 100%;
-            transform: translate(-50%, -50%);
-            object-fit: cover;
-            transition: opacity 0.8s ease-in-out;
-            filter: brightness(0.6) contrast(1.2);
-        }
-        #bg-overlay {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.6) 100%);
-            z-index: -5; pointer-events: none;
-        }
+        /* Background Layer */
+        #apex-bg-layer { position: fixed; inset: 0; z-index: -10; overflow: hidden; }
+        #image-bg, #video-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.8s; filter: brightness(0.5); }
+        #bg-overlay { position: absolute; inset: 0; background: radial-gradient(circle at center, transparent, rgba(0,0,0,0.8)); z-index: -5; }
 
-        #olympus-boot-screen {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 2s ease-in-out;
-        }
-        #boot-video {
-            width: 300px;
-            margin-bottom: 30px;
-            filter: drop-shadow(0 0 20px rgba(0, 242, 255, 0.4));
-        }
-        .loader-container {
-            width: 200px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        #loader-progress {
-            width: 0%;
-            height: 100%;
-            background: #fff;
-            box-shadow: 0 0 10px #fff;
-            transition: width 3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        /* Boot Screen */
+        #boot-screen { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 1s; }
+        .loader { width: 200px; height: 2px; background: rgba(255,255,255,0.1); margin-top: 20px; overflow: hidden; }
+        #loader-bar { width: 0%; height: 100%; background: var(--cyan); box-shadow: var(--bloom); transition: width 2s ease; }
 
-        #global-search-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            display: none;
-            justify-content: center;
-            align-items: flex-start;
-            padding-top: 15vh;
-            z-index: 11000;
-        }
-        .search-container {
-            width: 90%;
-            max-width: 600px;
-            background: rgba(20, 20, 25, 0.95);
-            border: 1px solid var(--cyan);
-            border-radius: 12px;
-            box-shadow: 0 0 40px rgba(0, 242, 255, 0.2);
-            overflow: hidden;
-        }
-        .search-input-wrapper {
-            display: flex;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 1px solid rgba(0, 242, 255, 0.1);
-        }
-        #global-search-input {
-            background: transparent;
-            border: none;
-            outline: none;
-            color: #fff;
-            font-size: 1.2rem;
-            width: 100%;
-            margin-left: 15px;
-        }
-        #search-results { padding: 20px; color: #fff; }
+        /* Header */
+        #system-header { padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 15px; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); position: relative; z-index: 100; }
+        .meta-row { display: flex; gap: 30px; font-size: 10px; letter-spacing: 2px; opacity: 0.8; }
+        .search-bar { width: 400px; padding: 12px 25px; border-radius: 25px; border: 1px solid var(--border); background: rgba(0,0,0,0.6); color: #fff; backdrop-filter: blur(10px); outline: none; text-align: center; transition: 0.3s; }
+        .search-bar:focus { border-color: var(--cyan); box-shadow: var(--bloom); }
 
-        #system-header {
-            width: 100%; padding: 25px; display: flex; flex-direction: column; align-items: center; gap: 20px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 100;
-            backdrop-filter: blur(2px);
+        /* Windowing System */
+        #desktop-manager { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+        .holoframe { 
+            position: absolute; width: 600px; height: 400px; background: var(--glass); 
+            border: 1px solid var(--cyan); border-radius: 8px; backdrop-filter: blur(20px); 
+            pointer-events: auto; display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
         }
-        .meta-row { display: flex; gap: 40px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; text-shadow: var(--bloom); }
-        .meta-item span { color: #fff; font-weight: bold; }
+        .holo-header { padding: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,242,255,0.1); cursor: move; border-bottom: 1px solid var(--border); }
+        .win-title { font-size: 11px; font-weight: bold; letter-spacing: 1px; }
+        .win-controls span { cursor: pointer; margin-left: 10px; font-size: 14px; }
+        .win-controls .close:hover { color: #ff3366; }
+        iframe { width: 100%; flex: 1; border: none; background: #fff; }
 
-        .search-container { width: 100%; max-width: 650px; position: relative; }
-        .search-bar {
-            width: 100%; padding: 14px 30px; border-radius: 50px; border: 1px solid var(--cyan);
-            background: rgba(0, 0, 0, 0.6); color: #fff; outline: none;
-            backdrop-filter: blur(15px); box-shadow: var(--bloom);
-            font-family: inherit; text-align: center; letter-spacing: 2px; transition: 0.3s;
+        /* Side Dock */
+        #side-dock { 
+            position: fixed; right: -210px; top: 0; height: 100%; width: 250px; 
+            background: rgba(0,10,15,0.9); border-left: 1px solid var(--border); 
+            transition: 0.4s cubic-bezier(0.1, 0.9, 0.2, 1); z-index: 5000; padding: 20px;
         }
-        .search-bar:focus { box-shadow: 0 0 30px var(--cyan); border-color: #fff; }
+        #side-dock.active { right: 0; }
+        .dock-trigger { position: absolute; left: -40px; top: 50%; transform: translateY(-50%); background: var(--cyan); color: #000; padding: 15px 10px; border-radius: 10px 0 0 10px; cursor: pointer; }
+        .dock-item { padding: 12px; margin: 8px 0; background: rgba(0,242,255,0.05); border: 1px solid transparent; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 13px; }
+        .dock-item:hover { background: rgba(0,242,255,0.15); border-color: var(--cyan); }
 
-        #control-center {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--cyan);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-        }
-        .mode-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin: 15px 0;
-        }
-        .mode-btn {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--cyan);
-            padding: 10px 0;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 1.2rem;
-        }
-        .mode-btn:hover {
-            background: var(--cyan);
-            color: #000;
-            box-shadow: var(--bloom);
-        }
-        .glow-text { text-shadow: var(--bloom); font-weight: bold; }
-        .system-stats {
-            text-align: center;
-        }
-        .stat-bar {
-            height: 5px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            margin-bottom: 5px;
-        }
-        .fill { height: 100%; background: var(--cyan); border-radius: 4px; }
-
-        #side-dock {
-            position: fixed;
-            right: -200px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 250px;
-            background: rgba(0, 20, 30, 0.9);
-            border: 1px solid var(--cyan);
-            border-radius: 15px 0 0 15px;
-            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 5000;
-            backdrop-filter: blur(10px);
-        }
-        #side-dock:hover, #side-dock.active { right: 0; }
-        .dock-trigger {
-            position: absolute;
-            left: -40px;
-            top: 20px;
-            background: var(--cyan);
-            color: #000;
-            padding: 10px;
-            border-radius: 8px 0 0 8px;
-            cursor: pointer;
-        }
-        .dock-content { padding: 20px; color: #fff; }
-        .dock-item { 
-            padding: 10px; 
-            margin: 5px 0; 
-            cursor: pointer; 
-            border-radius: 5px; 
-            transition: 0.3s;
-            font-size: 14px;
-            background: rgba(0,242,255,0.1);
-        }
-        .dock-item:hover { background: rgba(0, 242, 255, 0.3); }
-
-        #storage-dashboard {
-            background: rgba(0, 242, 255, 0.05);
-            border: 1px solid var(--border);
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 20px;
-        }
-        .savings-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            margin-bottom: 10px;
-        }
-        .progress-container {
-            height: 8px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            display: flex;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-        .device-usage { background: #ff3366; }
-        .server-usage { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
-        .storage-stats { display: flex; justify-content: space-between; }
-        .stat small { font-size: 8px; opacity: 0.6; }
-        .stat p { font-size: 12px; margin: 0; font-weight: bold; }
-
-        .bg-selector {
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        #bg-input {
-            padding: 10px;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: #fff;
-            border-radius: 8px;
-        }
-        .bg-selector button {
-            background: var(--cyan);
-            color: #000;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        #app-wrapper {
-            width: 100%; padding: 20px 5%; display: flex; flex-wrap: wrap; justify-content: center; 
-            gap: 35px; overflow-y: auto; max-height: 45vh;
-            scrollbar-width: none; 
-        }
-        #app-wrapper::-webkit-scrollbar { display: none; } 
-        .app-icon { 
-            width: 110px; display: flex; flex-direction: column; align-items: center; 
-            cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
-        .app-icon:hover { transform: scale(1.15) translateY(-5px); }
-        .icon-box { 
-            width: 70px; height: 70px; border: 2px solid var(--border); border-radius: 18px;
-            display: flex; justify-content: center; align-items: center; font-size: 32px;
-            background: rgba(0,0,0,0.7); margin-bottom: 10px; backdrop-filter: blur(5px);
-        }
-
-        .app-card {
-            width: 280px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(0, 242, 255, 0.2);
-            border-radius: 20px;
-            padding: 20px;
-            backdrop-filter: blur(15px);
-            transition: 0.4s;
-            position: relative;
-            overflow: hidden;
-        }
-        .app-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--cyan);
-            box-shadow: 0 10px 30px rgba(0, 242, 255, 0.2);
-        }
-        .app-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 9px;
-            background: var(--cyan);
-            color: #000;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .app-icon-large {
-            font-size: 50px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .app-info h4 { color: #fff; margin: 0 0 5px; letter-spacing: 1px; }
-        .app-info p { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 15px; }
-        .app-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: var(--cyan);
-            margin-bottom: 15px;
-        }
-        .install-btn {
-            width: 100%;
-            padding: 12px;
-            background: transparent;
-            border: 1px solid var(--cyan);
-            color: var(--cyan);
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-        .install-btn:hover {
-            background: var(--cyan);
-            color: #000;
-        }
-
-        #desktop-manager { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
-        .holoframe {
-            position: absolute; top: 15%; left: 15%; width: 75%; height: 70%; 
-            border: 2px solid var(--cyan); border-radius: 12px;
-            background: var(--glass); backdrop-filter: blur(30px);
-            box-shadow: 0 0 60px rgba(0, 242, 255, 0.25); pointer-events: auto;
-            overflow: hidden; display: flex; flex-direction: column;
-            transition: opacity 0.2s, transform 0.2s, left 0.15s ease-out, top 0.15s ease-out;
-            resize: both;
-            min-width: 200px;
-            min-height: 150px;
-        }
-        .holo-header {
-            padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border); cursor: move; user-select: none;
-        }
-        .window-controls { display: flex; align-items: center; flex: 1; }
-        .internal-address-bar { 
-            background: rgba(0,0,0,0.5); border: 1px solid var(--border); 
-            color: var(--cyan); font-family: monospace; font-size: 10px;
-            padding: 4px 10px; width: 65%; border-radius: 4px; outline: none; margin-left: 10px;
-        }
-        .action-btns { display: flex; gap: 12px; align-items: center; }
-        .nav-btn, .min-btn, .close-btn, .max-btn { cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.2s; }
-        .close-btn { color: #ff3366; }
-        .max-btn { color: var(--cyan); }
-        .nav-btn:hover, .max-btn:hover { text-shadow: var(--bloom); }
-        .iframe-wrapper { flex: 1; background: #000; }
-        iframe { width: 100%; height: 100%; border: none; }
-
-        /* Snap preview lines (visual feedback) */
-        .snap-guide {
-            position: fixed;
-            background: var(--cyan);
-            opacity: 0.3;
-            pointer-events: none;
-            z-index: 9999;
-            transition: opacity 0.2s;
-        }
-        .snap-guide.active { opacity: 0.6; }
-
-        #history-panel {
-            position: fixed; top: 0; left: -320px; width: 320px; height: 100%;
-            background: rgba(5, 10, 15, 0.95); border-right: 1px solid var(--border);
-            backdrop-filter: blur(25px); z-index: 3000; transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #history-panel.open { left: 0; }
-        #history-trigger {
-            position: fixed; top: 50%; left: 0; transform: translateY(-50%);
-            width: 25px; height: 80px; background: var(--glass); border: 1px solid var(--border);
-            border-radius: 0 15px 15px 0; cursor: pointer; z-index: 2900; 
-            display: flex; align-items: center; justify-content: center; color: var(--cyan);
-            user-select: none;
-        }
-        .dock {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 15px; padding: 12px 30px;
-            background: rgba(0,0,0,0.85); border: 1px solid var(--border);
-            border-radius: 50px; backdrop-filter: blur(15px); z-index: 500;
-        }
-        .dock-btn { 
-            cursor:pointer; font-size: 11px; letter-spacing: 1px; color: var(--cyan); transition: 0.3s; 
-            padding: 8px 12px; border-radius: 8px; background: rgba(0,242,255,0.1);
-        }
-        .dock-btn:hover { background: rgba(0,242,255,0.3); color: #fff; text-shadow: var(--bloom); }
-
-        /* PWA Install Banner */
-        #pwa-install-banner {
-            position: fixed;
-            bottom: 90px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,242,255,0.2);
-            border: 1px solid var(--cyan);
-            border-radius: 12px;
-            padding: 12px 24px;
-            color: var(--cyan);
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 800;
-            box-shadow: 0 0 20px rgba(0,242,255,0.3);
-            display: none;
-            transition: all 0.3s;
-        }
-        #pwa-install-banner:hover {
-            background: var(--cyan);
-            color: #000;
-            box-shadow: 0 0 30px var(--cyan);
-        }
+        /* Snap Guides */
+        .snap-line { position: fixed; background: var(--cyan); opacity: 0; pointer-events: none; z-index: 9999; transition: opacity 0.2s; }
+        .snap-active { opacity: 0.5; }
     </style>
 </head>
 <body>
 
-    <!-- Background Container -->
-    <div id="apex-background-container">
-        <div id="image-bg"></div>
+    <div id="apex-bg-layer">
         <video id="video-bg" autoplay loop muted playsinline></video>
+        <div id="image-bg"></div>
         <div id="bg-overlay"></div>
     </div>
 
-    <!-- Boot Screen -->
-    <div id="olympus-boot-screen">
-        <video id="boot-video" autoplay loop muted playsinline>
-            <source src="https://files.catbox.moe/5xh10y.mp4" type="video/mp4">
-        </video>
-        <div class="loader-container">
-            <div id="loader-progress"></div>
-        </div>
+    <div id="boot-screen">
+        <h1 style="letter-spacing: 10px;">ARTEMIS</h1>
+        <div class="loader"><div id="loader-bar"></div></div>
     </div>
 
-    <!-- Global Search Overlay -->
-    <div id="global-search-overlay">
-        <div class="search-container">
-            <div class="search-input-wrapper">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="global-search-input" placeholder="Search Olympus Ecosystem..." autocomplete="off">
-            </div>
-            <div id="search-results"></div>
-        </div>
-    </div>
-
-    <!-- System Header -->
     <header id="system-header">
         <div class="meta-row">
-            <div class="meta-item">ARCHIVE: <span id="cur-date">--/--/--</span></div>
-            <div class="meta-item">CHRONO: <span id="cur-time">00:00:00</span></div>
-            <div class="meta-item">STATUS: <span id="cur-traffic">APEX ACTIVE</span></div>
+            <span>CORE: <strong id="cur-time">00:00:00</strong></span>
+            <span>SYSTEM: <strong id="active-mode">ARTEMIS</strong></span>
         </div>
-        <div class="search-container">
-            <form id="neural-search-form" onsubmit="executeNeuralSearch(event)">
-                <input type="text" id="search-input" class="search-bar" placeholder="EXECUTE NEURAL COMMAND...">
-            </form>
-        </div>
+        <input type="text" class="search-bar" placeholder="INITIATE COMMAND...">
     </header>
 
-    <!-- Control Center -->
-    <div id="control-center">
-        <div class="status-row">
-            <span class="status-label">IDENTITY:</span>
-            <span id="active-mode-display" class="glow-text">ARTEMIS</span>
-        </div>
-        <div class="mode-grid">
-            <button class="mode-btn" onclick="switchMode('ARTEMIS')">Ω</button>
-            <button class="mode-btn" onclick="switchMode('APPLE')"></button>
-            <button class="mode-btn" onclick="switchMode('LINUX')">🐧</button>
-            <button class="mode-btn" onclick="switchMode('MICROSOFT')">⊞</button>
-        </div>
-        <div class="system-stats">
-            <div class="stat-bar"><div class="fill" style="width: 40%;"></div></div>
-            <small>NEURAL LOAD: 40%</small>
-        </div>
-    </div>
-
-    <!-- Side Dock -->
     <div id="side-dock">
-        <div class="dock-trigger">📂</div>
-        <div class="dock-content" id="dock-content">
-            <h3>APEX APPS</h3>
-            <div class="dock-item" onclick="spawnFrame('https://www.tiktok.com', 'TIKTOK', '#ff0050')">🎵 TikTok</div>
-            <div class="dock-item" onclick="spawnFrame('https://www.google.com/docs', 'DOCS', '#4285f4')">📄 Google Docs</div>
-            <div class="dock-item" onclick="spawnFrame('https://www.spotify.com', 'SPOTIFY', '#1DB954')">🎧 Spotify</div>
-            <hr>
-            <h3>MY STORAGE</h3>
-            <div class="dock-item">📁 Documents</div>
-            <div class="dock-item">🎬 Media</div>
-            <div id="minimized-windows"></div>
-        </div>
+        <div class="dock-trigger" onclick="document.getElementById('side-dock').classList.toggle('active')">📂</div>
+        <h3 style="font-size: 12px; opacity: 0.5;">APEX MODULES</h3>
+        <div id="dock-apps"></div>
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+        <h3 style="font-size: 12px; opacity: 0.5;">ACTIVE THREADS</h3>
+        <div id="minimized-tasks"></div>
     </div>
 
-    <!-- Storage Dashboard -->
-    <div id="storage-dashboard">
-        <div class="savings-header">
-            <span class="glow-text">APEX VIRTUAL STORAGE</span>
-            <span id="save-percentage">98% CLEAR</span>
-        </div>
-        <div class="progress-container">
-            <div class="progress-bar device-usage" style="width: 2%;"></div>
-            <div class="progress-bar server-usage" style="width: 98%;"></div>
-        </div>
-        <div class="storage-stats">
-            <div class="stat">
-                <small>DEVICE</small>
-                <p>12 MB</p>
-            </div>
-            <div class="stat" style="text-align: right;">
-                <small>SERVER (SAVED)</small>
-                <p id="total-saved">42.5 GB</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- BG Selector -->
-    <div class="bg-selector">
-        <h4>CUSTOM BACKGROUND</h4>
-        <input type="text" id="bg-input" placeholder="Paste image or video URL...">
-        <button onclick="applyCustomBg()">APPLY TO THIS MODE</button>
-    </div>
-
-    <!-- App Wrapper -->
-    <main id="app-wrapper"></main>
     <div id="desktop-manager"></div>
 
-    <!-- History Panel -->
-    <div id="history-panel">
-        <div style="padding:40px 25px; font-size:16px; letter-spacing:5px; border-bottom:1px solid var(--border);">HERITAGE LEDGER</div>
-        <div id="history-list" style="padding:10px; overflow-y:auto; height:calc(100% - 120px);"></div>
-    </div>
-    <div id="history-trigger" onclick="toggleHistory(event)">☰</div>
-
-    <!-- Bottom Dock -->
-    <div class="dock">
-        <div class="dock-btn" onclick="spawnFrame('https://artemis-hub.vercel.app/', 'NEXUS HUB', '#00f2ff')">[ ACCESS NEXUS ]</div>
-    </div>
-
-    <!-- PWA Install Banner -->
-    <div id="pwa-install-banner">Install Artemis OS</div>
-
-    <!-- Snap Guides -->
-    <div class="snap-guide" id="snap-left" style="left:0; top:0; width:4px; height:100vh;"></div>
-    <div class="snap-guide" id="snap-right" style="right:0; top:0; width:4px; height:100vh;"></div>
-    <div class="snap-guide" id="snap-top" style="left:0; top:0; width:100vw; height:4px;"></div>
+    <div class="snap-line" id="snap-L" style="left:0; top:0; width:4px; height:100%;"></div>
+    <div class="snap-line" id="snap-R" style="right:0; top:0; width:4px; height:100%;"></div>
 
 <script>
-    // --- SYSTEMS CONFIG ---
-    const systems = {
-        ARTEMIS: { 
-            color: "#00f2ff", font: "Courier New", defaultBg: "https://cdn.pixabay.com/video/2023/10/20/185834-876615024_tiny.mp4",
-            apps: [
-                { name: "NEXUS HUB", url: "https://artemis-hub.vercel.app/", icon: "🧬" },
-                { name: "ARCHITECT", url: "https://architect-artemis.vercel.app/", icon: "📐" }
-            ]
-        },
-        APPLE: { 
-            color: "#ffffff", font: "-apple-system, sans-serif", defaultBg: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop",
-            apps: [
-                { name: "ICLOUD", url: "https://www.icloud.com", icon: "☁️" },
-                { name: "APPLE MUSIC", url: "https://music.apple.com", icon: "🎵" }
-            ]
-        },
-        LINUX: { 
-            color: "#39ff14", font: "monospace", defaultBg: "https://cdn.pixabay.com/video/2021/08/20/85732-590457611_tiny.mp4",
-            apps: [
-                { name: "TERMINAL", url: "https://web-terminal.io", icon: "🐚" },
-                { name: "GITHUB", url: "https://github.com", icon: "🐙" }
-            ]
-        },
-        MICROSOFT: { 
-            color: "#00a4ef", font: "Segoe UI, sans-serif", defaultBg: "https://images.unsplash.com/photo-1635326445090-67f139618175?q=80&w=2070&auto=format&fit=crop",
-            apps: [
-                { name: "ONEDRIVE", url: "https://onedrive.live.com", icon: "☁️" },
-                { name: "TEAMS", url: "https://teams.microsoft.com", icon: "👥" }
-            ]
-        }
+    const config = {
+        ARTEMIS: { color: "#00f2ff", bg: "https://cdn.pixabay.com/video/2023/10/20/185834-876615024_tiny.mp4", apps: [{n:"Nexus Hub", u:"https://artemis-hub.vercel.app/"}, {n:"Architect", u:"https://architect-artemis.vercel.app/"}] },
+        LINUX: { color: "#39ff14", bg: "https://cdn.pixabay.com/video/2021/08/20/85732-590457611_tiny.mp4", apps: [{n:"Terminal", u:"https://web-terminal.io"}] }
     };
 
-    // --- GLOBAL VARIABLES ---
-    let threads = [];
-    let historyData = JSON.parse(localStorage.getItem('artemis_history') || "[]");
-    let currentMode = localStorage.getItem('artemis-mode') || 'ARTEMIS';
-    let deferredPrompt = null;
+    let activeThreads = [];
 
-    // --- PWA INSTALL BANNER ---
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        document.getElementById('pwa-install-banner').style.display = 'block';
-    });
-
-    document.getElementById('pwa-install-banner').addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log('[PWA] Install outcome:', outcome);
-            deferredPrompt = null;
-            document.getElementById('pwa-install-banner').style.display = 'none';
-        }
-    });
-
-    // --- BOOT SEQUENCE ---
-    window.addEventListener('load', () => {
-        const progress = document.getElementById('loader-progress');
-        const bootScreen = document.getElementById('olympus-boot-screen');
-
-        setTimeout(() => progress.style.width = '100%', 100);
-
+    window.onload = () => {
+        document.getElementById('loader-bar').style.width = '100%';
         setTimeout(() => {
-            bootScreen.style.opacity = '0';
-            setTimeout(() => {
-                bootScreen.style.display = 'none';
-                initArtemisEnvironment();
-            }, 2000);
-        }, 3500);
-    });
+            document.getElementById('boot-screen').style.opacity = '0';
+            setTimeout(() => document.getElementById('boot-screen').remove(), 1000);
+            initSystem('ARTEMIS');
+        }, 2500);
 
-    function initArtemisEnvironment() {
-        switchMode(currentMode);
-        renderHistory();
-        updateStorageStats();
         setInterval(() => {
-            const now = new Date();
-            document.getElementById('cur-date').innerText = now.toLocaleDateString();
-            document.getElementById('cur-time').innerText = now.toLocaleTimeString();
+            document.getElementById('cur-time').innerText = new Date().toLocaleTimeString();
         }, 1000);
-    }
+    };
 
-    // --- MODE SWITCHING ---
-    function switchMode(modeName) {
-        const config = systems[modeName];
-        if (!config) return;
-
-        document.body.style.filter = "brightness(0)";
-
-        setTimeout(() => {
-            document.documentElement.style.setProperty('--cyan', config.color);
-            document.body.style.fontFamily = config.font;
-            document.getElementById('active-mode-display').innerText = modeName;
-
-            const settings = JSON.parse(localStorage.getItem('apex-os-settings') || "{}");
-            const activeBg = settings[modeName]?.background || config.defaultBg;
-            updateOSBackground(modeName, activeBg);
-
-            renderDockApps(modeName);
-
-            localStorage.setItem('artemis-mode', modeName);
-            currentMode = modeName;
-
-            console.log(`[SYS] Environment reconfigured: ${modeName} protocols active.`);
-            document.body.style.filter = "brightness(1)";
-        }, 400);
-    }
-
-    // --- BACKGROUND HANDLING ---
-    function updateOSBackground(modeName, fileUrl) {
-        const videoEl = document.getElementById('video-bg');
-        const imageEl = document.getElementById('image-bg');
+    function initSystem(mode) {
+        const sys = config[mode];
+        document.documentElement.style.setProperty('--cyan', sys.color);
+        document.getElementById('active-mode').innerText = mode;
         
-        const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(fileUrl);
+        // Background update
+        const vid = document.getElementById('video-bg');
+        vid.src = sys.bg;
+        vid.play();
 
-        if (isVideo) {
-            imageEl.style.opacity = '0';
-            videoEl.src = fileUrl;
-            videoEl.style.opacity = '1';
-            videoEl.play().catch(e => console.log("Autoplay blocked"));
-        } else {
-            videoEl.style.opacity = '0';
-            imageEl.style.backgroundImage = `url(${fileUrl})`;
-            imageEl.style.backgroundSize = 'cover';
-            imageEl.style.backgroundPosition = 'center';
-            imageEl.style.opacity = '1';
-        }
-
-        saveBackgroundPreference(modeName, fileUrl);
-    }
-
-    function saveBackgroundPreference(mode, url) {
-        let settings = JSON.parse(localStorage.getItem('apex-os-settings') || "{}");
-        if (!settings[mode]) settings[mode] = {};
-        settings[mode].background = url;
-        localStorage.setItem('apex-os-settings', JSON.stringify(settings));
-    }
-
-    function applyCustomBg() {
-        const url = document.getElementById('bg-input').value;
-        if (url) {
-            updateOSBackground(currentMode, url);
-            alert(`Background updated for ${currentMode} mode!`);
-        }
-    }
-
-    // --- DOCK RENDERING ---
-    function renderDockApps(modeName) {
-        const dockContent = document.querySelector('#dock-content');
-        const appList = systems[modeName].apps;
-        
-        // Keep existing content, only update apps section
-        const appsSection = dockContent.querySelector('h3').nextElementSibling;
-        if (appsSection) appsSection.remove();
-        
-        const appsDiv = document.createElement('div');
-        appList.forEach(app => {
-            const item = document.createElement('div');
-            item.className = 'dock-item';
-            item.innerHTML = `${app.icon} ${app.name}`;
-            item.onclick = () => spawnFrame(app.url, app.name, systems[modeName].color);
-            appsDiv.appendChild(item);
+        // Render Apps
+        const container = document.getElementById('dock-apps');
+        container.innerHTML = '';
+        sys.apps.forEach(app => {
+            const div = document.createElement('div');
+            div.className = 'dock-item';
+            div.innerText = app.n;
+            div.onclick = () => spawnWindow(app.u, app.n);
+            container.appendChild(div);
         });
-        dockContent.insertBefore(appsDiv, dockContent.querySelector('hr'));
     }
 
-    // --- APP INSTALLATION & STORAGE ---
-    function installToArtemis(name, url, icon) {
-        let myApps = JSON.parse(localStorage.getItem('apex-installed-apps') || "[]");
-        if (myApps.some(a => a.url === url)) return alert("App already in OS.");
-        myApps.push({ name, url, icon, mode: currentMode });
-        localStorage.setItem('apex-installed-apps', JSON.stringify(myApps));
-        renderDockApps(currentMode);
-        updateStorageStats();
-    }
-
-    function updateStorageStats() {
-        const myApps = JSON.parse(localStorage.getItem('apex-installed-apps') || "[]");
-        const savedGB = (myApps.length * 150 / 1024).toFixed(1);
-        document.getElementById('total-saved').innerText = `${savedGB} GB`;
-    }
-
-    // --- WINDOW MANAGEMENT ---
-    function spawnFrame(url, name, color) {
-        const id = 'win-' + Date.now();
-        const markup = `
-            <div class="holoframe" id="${id}" style="border-color:${color};">
-                <div class="holo-header" style="background:${color}22">
-                    <div class="window-controls">
-                        <span style="color:${color}; font-weight:bold;">${name}</span>
-                        <input type="text" class="internal-address-bar" value="${url}" onkeypress="if(event.key==='Enter') document.getElementById('iframe-${id}').src=this.value">
-                    </div>
-                    <div class="action-btns">
-                        <span class="nav-btn">[←]</span>
-                        <span class="nav-btn">[→]</span>
-                        <span class="max-btn" onclick="toggleMaximize('${id}')">[□]</span>
-                        <span class="min-btn" onclick="minimizeThread('${id}', '${name}')">[_]</span>
-                        <span class="close-btn" onclick="terminateThread('${id}')">[X]</span>
-                    </div>
+    function spawnWindow(url, title) {
+        const id = 'win_' + Date.now();
+        const win = document.createElement('div');
+        win.className = 'holoframe';
+        win.id = id;
+        win.style.left = '100px';
+        win.style.top = '100px';
+        
+        win.innerHTML = `
+            <div class="holo-header">
+                <span class="win-title">${title}</span>
+                <div class="win-controls">
+                    <span onclick="minimizeWin('${id}')">_</span>
+                    <span class="close" onclick="closeWin('${id}')">X</span>
                 </div>
-                <div class="iframe-wrapper">
-                    <iframe id="iframe-${id}" src="${url}" allow="fullscreen"></iframe>
-                </div>
-            </div>`;
+            </div>
+            <iframe src="${url}"></iframe>
+        `;
 
-        document.getElementById('desktop-manager').insertAdjacentHTML('beforeend', markup);
-        const el = document.getElementById(id);
-        makeDraggable(el);
-        makeResizable(el);
-        makeDroppableToDock(el, id, name, color);
-        focusThread(id);
-        threads.push({ id, name, color, el });
+        document.getElementById('desktop-manager').appendChild(win);
+        makeDraggable(win);
+        focusWin(id);
     }
 
     function makeDraggable(el) {
-        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        let x = 0, y = 0, nx = 0, ny = 0;
         const header = el.querySelector('.holo-header');
-        header.onmousedown = dragMouseDown;
-        header.ontouchstart = dragMouseDown;
+        
+        header.onmousedown = dragStart;
+        header.ontouchstart = dragStart;
 
-        function dragMouseDown(e) {
-            e.preventDefault();
-            pos3 = e.clientX || e.touches[0].clientX;
-            pos4 = e.clientY || e.touches[0].clientY;
-            document.onmouseup = closeDrag;
-            document.onmousemove = elementDrag;
-            document.ontouchend = closeDrag;
-            document.ontouchmove = elementDrag;
-            focusThread(el.id);
+        function dragStart(e) {
+            focusWin(el.id);
+            nx = e.clientX || e.touches[0].clientX;
+            ny = e.clientY || e.touches[0].clientY;
+            document.onmousemove = dragging;
+            document.ontouchmove = dragging;
+            document.onmouseup = dragEnd;
+            document.ontouchend = dragEnd;
         }
 
-        function elementDrag(e) {
-            e.preventDefault();
-            pos1 = pos3 - (e.clientX || e.touches[0].clientX);
-            pos2 = pos4 - (e.clientY || e.touches[0].clientY);
-            pos3 = e.clientX || e.touches[0].clientX;
-            pos4 = e.clientY || e.touches[0].clientY;
+        function dragging(e) {
+            const cx = e.clientX || e.touches[0].clientX;
+            const cy = e.clientY || e.touches[0].clientY;
+            x = nx - cx;
+            y = ny - cy;
+            nx = cx;
+            ny = cy;
 
-            let newLeft = el.offsetLeft - pos1;
-            let newTop = el.offsetTop - pos2;
+            let finalTop = el.offsetTop - y;
+            let finalLeft = el.offsetLeft - x;
 
-            // Snap-to-edge logic
-            const snapThreshold = 30;
-            const vw = window.innerWidth;
-            const vh = window.innerHeight;
+            // Dock Interaction
+            if (nx > window.innerWidth - 100) {
+                document.getElementById('side-dock').classList.add('active');
+            } else {
+                document.getElementById('side-dock').classList.remove('active');
+            }
 
-            if (newLeft < snapThreshold) newLeft = 0;
-            if (newLeft + el.offsetWidth > vw - snapThreshold) newLeft = vw - el.offsetWidth;
-            if (newTop < snapThreshold) newTop = 0;
-            if (newTop + el.offsetHeight > vh - snapThreshold) newTop = vh - el.offsetHeight;
+            // Screen Snapping
+            document.getElementById('snap-L').classList.toggle('snap-active', finalLeft < 20);
+            document.getElementById('snap-R').classList.toggle('snap-active', finalLeft + el.offsetWidth > window.innerWidth - 20);
+            
+            if (finalLeft < 10) finalLeft = 0;
+            if (finalLeft + el.offsetWidth > window.innerWidth - 10) finalLeft = window.innerWidth - el.offsetWidth;
 
-            el.style.left = newLeft + "px";
-            el.style.top = newTop + "px";
-
-            // Show snap guides
-            document.getElementById('snap-left').classList.toggle('active', newLeft === 0);
-            document.getElementById('snap-right').classList.toggle('active', newLeft + el.offsetWidth === vw);
-            document.getElementById('snap-top').classList.toggle('active', newTop === 0);
+            el.style.top = finalTop + "px";
+            el.style.left = finalLeft + "px";
         }
 
-        function closeDrag() {
-            document.onmouseup = null;
+        function dragEnd() {
             document.onmousemove = null;
-            document.ontouchend = null;
             document.ontouchmove = null;
-            document.querySelectorAll('.snap-guide').forEach(g => g.classList.remove('active'));
+            document.querySelectorAll('.snap-line').forEach(l => l.classList.remove('snap-active'));
         }
     }
 
-    function makeResizable(el) {
-        el.style.resize = 'both';
-        el.style.overflow = 'hidden';
-    }
-
-    function toggleMaximize(id) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (el.classList.contains('maximized')) {
-            el.classList.remove('maximized');
-            el.style.top = el.dataset.origTop || '15%';
-            el.style.left = el.dataset.origLeft || '15%';
-            el.style.width = el.dataset.origWidth || '75%';
-            el.style.height = el.dataset.origHeight || '70%';
-        } else {
-            el.dataset.origTop = el.style.top;
-            el.dataset.origLeft = el.style.left;
-            el.dataset.origWidth = el.style.width;
-            el.dataset.origHeight = el.style.height;
-            el.classList.add('maximized');
-            el.style.top = '0';
-            el.style.left = '0';
-            el.style.width = '100vw';
-            el.style.height = '100vh';
-        }
-    }
-
-    function makeDroppableToDock(el, id, name, color) {
-        let isOverDock = false;
-
-        el.addEventListener('mousedown', () => focusThread(id));
-        el.addEventListener('touchstart', () => focusThread(id));
-
-        document.addEventListener('mousemove', (e) => {
-            const dockRect = document.getElementById('side-dock').getBoundingClientRect();
-            if (e.clientX > dockRect.left - 50) {
-                document.getElementById('side-dock').classList.add('active');
-                isOverDock = true;
-            } else {
-                document.getElementById('side-dock').classList.remove('active');
-                isOverDock = false;
-            }
-        });
-
-        document.addEventListener('mouseup', () => {
-            if (isOverDock) {
-                minimizeToDock(id, name, color);
-                document.getElementById('side-dock').classList.remove('active');
-            }
-        });
-
-        // Touch support
-        document.addEventListener('touchmove', (e) => {
-            const touch = e.touches[0];
-            const dockRect = document.getElementById('side-dock').getBoundingClientRect();
-            if (touch.clientX > dockRect.left - 50) {
-                document.getElementById('side-dock').classList.add('active');
-                isOverDock = true;
-            } else {
-                isOverDock = false;
-            }
-        });
-
-        document.addEventListener('touchend', () => {
-            if (isOverDock) {
-                minimizeToDock(id, name, color);
-                document.getElementById('side-dock').classList.remove('active');
-            }
-        });
-    }
-
-    function minimizeToDock(id, name, color) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.remove();
-
-        const dock = document.getElementById('minimized-windows');
-        const item = document.createElement('div');
-        item.className = 'dock-item';
-        item.innerHTML = `<span style="color:${color}">${name}</span>`;
-        item.onclick = () => spawnFrame(el.querySelector('iframe').src, name, color);
-        dock.appendChild(item);
-
-        threads = threads.filter(t => t.id !== id);
-    }
-
-    function focusThread(id) {
-        threads.forEach(t => {
-            const el = document.getElementById(t.id);
-            if (el) el.style.zIndex = 1000;
-        });
+    function focusWin(id) {
+        document.querySelectorAll('.holoframe').forEach(w => w.style.zIndex = 100);
         const target = document.getElementById(id);
-        if (target) target.style.zIndex = 2000;
+        if(target) target.style.zIndex = 1000;
     }
 
-    function terminateThread(id) {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-        threads = threads.filter(t => t.id !== id);
+    function closeWin(id) {
+        document.getElementById(id).remove();
     }
 
-    // Rest of your original script (unchanged parts)
-    // ... (executeNeuralSearch, renderHistory, logHistory, etc.)
-
+    function minimizeWin(id) {
+        const win = document.getElementById(id);
+        const title = win.querySelector('.win-title').innerText;
+        const url = win.querySelector('iframe').src;
+        
+        const task = document.createElement('div');
+        task.className = 'dock-item';
+        task.style.borderLeft = "2px solid var(--cyan)";
+        task.innerText = "RUNNING: " + title;
+        task.onclick = () => {
+            spawnWindow(url, title);
+            task.remove();
+        };
+        
+        document.getElementById('minimized-tasks').appendChild(task);
+        win.remove();
+    }
 </script>
 </body>
 </html>
