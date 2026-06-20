@@ -3,91 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ARTEMIS • APEX HERITAGE</title>
+    <title>NOVA • APEX HERITAGE</title>
     <style>
         :root { 
             --cyan: #00f2ff; 
             --glass: rgba(0, 15, 25, 0.7); 
             --border: rgba(0, 242, 255, 0.4); 
             --bloom: 0 0 20px rgba(0, 242, 255, 0.5);
+            --transition-speed: 0.3s;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        body, html { margin:0; padding:0; width:100%; height:100vh; overflow:hidden; background: #000; font-family: 'Courier New', monospace; color: var(--cyan); transition: filter 0.5s ease; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        
+        body, html { 
+            margin: 0; padding: 0; 
+            width: 100%; height: 100vh; 
+            overflow: hidden; 
+            background: #000; 
+            font-family: 'Courier New', monospace; 
+            color: var(--cyan); 
+            transition: filter 0.5s ease; 
+        }
         
         /* Background Layer */
         #apex-bg-layer { position: fixed; inset: 0; z-index: -10; overflow: hidden; }
-        #image-bg, #video-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.8s; filter: brightness(0.5); }
+        #video-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.8s; filter: brightness(0.5); }
         #bg-overlay { position: absolute; inset: 0; background: radial-gradient(circle at center, transparent, rgba(0,0,0,0.8)); z-index: -5; }
 
         /* Boot Screen */
-        #boot-screen { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 1s; }
+        #boot-screen { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 1s ease-in-out; }
         .loader { width: 200px; height: 2px; background: rgba(255,255,255,0.1); margin-top: 20px; overflow: hidden; }
-        #loader-bar { width: 0%; height: 100%; background: var(--cyan); box-shadow: var(--bloom); transition: width 2s ease; }
+        #loader-bar { width: 0%; height: 100%; background: var(--cyan); box-shadow: var(--bloom); transition: width 2s cubic-bezier(0.4, 0, 0.2, 1); }
 
         /* Header */
-        #system-header { padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 15px; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); position: relative; z-index: 100; }
+        #system-header { padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 15px; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); position: relative; z-index: 100; pointer-events: none; }
         .meta-row { display: flex; gap: 30px; font-size: 10px; letter-spacing: 2px; opacity: 0.8; }
-        .search-bar { width: 400px; padding: 12px 25px; border-radius: 25px; border: 1px solid var(--border); background: rgba(0,0,0,0.6); color: #fff; backdrop-filter: blur(10px); outline: none; text-align: center; transition: 0.3s; }
+        .search-bar { width: 100%; max-width: 400px; padding: 12px 25px; border-radius: 25px; border: 1px solid var(--border); background: rgba(0,0,0,0.6); color: #fff; backdrop-filter: blur(10px); outline: none; text-align: center; transition: var(--transition-speed); pointer-events: auto; }
         .search-bar:focus { border-color: var(--cyan); box-shadow: var(--bloom); }
 
         /* Windowing System */
         #desktop-manager { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
         .holoframe { 
-            position: absolute; width: 600px; height: 400px; background: var(--glass); 
-            border: 1px solid var(--cyan); border-radius: 8px; backdrop-filter: blur(20px); 
-            pointer-events: auto; display: flex; flex-direction: column; overflow: hidden;
+            position: absolute; 
+            width: min(600px, 95vw); 
+            height: min(400px, 80vh); 
+            background: var(--glass); 
+            border: 1px solid var(--cyan); 
+            border-radius: 8px; 
+            backdrop-filter: blur(20px); 
+            pointer-events: auto; 
+            display: flex; flex-direction: column; overflow: hidden;
             box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            will-change: transform;
         }
-        .holo-header { padding: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,242,255,0.1); cursor: move; border-bottom: 1px solid var(--border); }
+        .holo-header { padding: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,242,255,0.1); cursor: move; border-bottom: 1px solid var(--border); user-select: none; }
         .win-title { font-size: 11px; font-weight: bold; letter-spacing: 1px; }
-        .win-controls span { cursor: pointer; margin-left: 10px; font-size: 14px; }
+        .win-controls span { cursor: pointer; margin-left: 10px; font-size: 14px; transition: color 0.2s; }
         .win-controls .close:hover { color: #ff3366; }
         iframe { width: 100%; flex: 1; border: none; background: #fff; }
 
         /* Side Dock */
         #side-dock { 
-            position: fixed; right: -210px; top: 0; height: 100%; width: 250px; 
-            background: rgba(0,10,15,0.9); border-left: 1px solid var(--border); 
-            transition: 0.4s cubic-bezier(0.1, 0.9, 0.2, 1); z-index: 5000; padding: 20px;
+            position: fixed; right: -250px; top: 0; height: 100%; width: 250px; 
+            background: rgba(0,10,15,0.95); border-left: 1px solid var(--border); 
+            transition: right 0.4s cubic-bezier(0.1, 0.9, 0.2, 1); z-index: 5000; padding: 20px;
         }
         #side-dock.active { right: 0; }
-        .dock-trigger { position: absolute; left: -40px; top: 50%; transform: translateY(-50%); background: var(--cyan); color: #000; padding: 15px 10px; border-radius: 10px 0 0 10px; cursor: pointer; }
-        .dock-item { padding: 12px; margin: 8px 0; background: rgba(0,242,255,0.05); border: 1px solid transparent; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 13px; }
+        .dock-trigger { position: absolute; left: -40px; top: 50%; transform: translateY(-50%); background: var(--cyan); color: #000; padding: 15px 10px; border-radius: 10px 0 0 10px; cursor: pointer; transition: background 0.2s; }
+        .dock-trigger:hover { background: #fff; }
+        .dock-item { padding: 12px; margin: 8px 0; background: rgba(0,242,255,0.05); border: 1px solid transparent; border-radius: 6px; cursor: pointer; transition: var(--transition-speed); font-size: 13px; }
         .dock-item:hover { background: rgba(0,242,255,0.15); border-color: var(--cyan); }
 
         /* Snap Guides */
         .snap-line { position: fixed; background: var(--cyan); opacity: 0; pointer-events: none; z-index: 9999; transition: opacity 0.2s; }
         .snap-active { opacity: 0.5; }
+        
+        /* Utility classes */
+        .separator { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
+        .section-title { font-size: 12px; opacity: 0.5; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div id="apex-bg-layer">
         <video id="video-bg" autoplay loop muted playsinline></video>
-        <div id="image-bg"></div>
         <div id="bg-overlay"></div>
     </div>
 
     <div id="boot-screen">
-        <h1 style="letter-spacing: 10px;">ARTEMIS</h1>
+        <h1 style="letter-spacing: 10px;">NOVA</h1>
         <div class="loader"><div id="loader-bar"></div></div>
     </div>
 
     <header id="system-header">
         <div class="meta-row">
             <span>CORE: <strong id="cur-time">00:00:00</strong></span>
-            <span>SYSTEM: <strong id="active-mode">ARTEMIS</strong></span>
+            <span>SYSTEM: <strong id="active-mode">NOVA</strong></span>
         </div>
-        <input type="text" class="search-bar" placeholder="INITIATE COMMAND...">
+        <input type="text" class="search-bar" placeholder="INITIATE COMMAND..." aria-label="Command Input">
     </header>
 
     <div id="side-dock">
-        <div class="dock-trigger" onclick="document.getElementById('side-dock').classList.toggle('active')">📂</div>
-        <h3 style="font-size: 12px; opacity: 0.5;">APEX MODULES</h3>
+        <div class="dock-trigger" onclick="toggleDock()" aria-label="Toggle Dock">📂</div>
+        <h3 class="section-title">APEX MODULES</h3>
         <div id="dock-apps"></div>
-        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
-        <h3 style="font-size: 12px; opacity: 0.5;">ACTIVE THREADS</h3>
+        <hr class="separator">
+        <h3 class="section-title">ACTIVE THREADS</h3>
         <div id="minimized-tasks"></div>
     </div>
 
@@ -98,121 +122,171 @@
 
 <script>
     const config = {
-        ARTEMIS: { color: "#00f2ff", bg: "https://cdn.pixabay.com/video/2023/10/20/185834-876615024_tiny.mp4", apps: [{n:"Nexus Hub", u:"https://artemis-hub.vercel.app/"}, {n:"Architect", u:"https://architect-artemis.vercel.app/"}] },
-        LINUX: { color: "#39ff14", bg: "https://cdn.pixabay.com/video/2021/08/20/85732-590457611_tiny.mp4", apps: [{n:"Terminal", u:"https://web-terminal.io"}] }
+        NOVA: { 
+            color: "#00f2ff", 
+            bg: "https://cdn.pixabay.com/video/2023/10/20/185834-876615024_tiny.mp4", 
+            apps: [
+                { id: "nexus", n: "Nexus Hub", u: "https://artemis-hub.vercel.app/" }, 
+                { id: "arch", n: "Architect", u: "https://architect-artemis.vercel.app/" }
+            ] 
+        },
+        LINUX: { 
+            color: "#39ff14", 
+            bg: "https://cdn.pixabay.com/video/2021/08/20/85732-590457611_tiny.mp4", 
+            apps: [
+                { id: "term", n: "Terminal", u: "https://web-terminal.io" }
+            ] 
+        }
     };
 
-    let activeThreads = [];
+    // Cache DOM Elements for performance
+    const DOM = {
+        time: document.getElementById('cur-time'),
+        mode: document.getElementById('active-mode'),
+        dock: document.getElementById('side-dock'),
+        desktop: document.getElementById('desktop-manager'),
+        tasks: document.getElementById('minimized-tasks'),
+        snapL: document.getElementById('snap-L'),
+        snapR: document.getElementById('snap-R')
+    };
+
+    let activeThreads = new Map(); // More efficient than arrays for tracking windows
+    let isDragging = false;
+    let dragFrame;
 
     window.onload = () => {
         document.getElementById('loader-bar').style.width = '100%';
         setTimeout(() => {
-            document.getElementById('boot-screen').style.opacity = '0';
-            setTimeout(() => document.getElementById('boot-screen').remove(), 1000);
-            initSystem('ARTEMIS');
+            const boot = document.getElementById('boot-screen');
+            boot.style.opacity = '0';
+            setTimeout(() => boot.remove(), 1000);
+            initSystem('NOVA');
         }, 2500);
 
+        // Optimize clock update logic
         setInterval(() => {
-            document.getElementById('cur-time').innerText = new Date().toLocaleTimeString();
+            DOM.time.innerText = new Date().toLocaleTimeString();
         }, 1000);
     };
 
     function initSystem(mode) {
         const sys = config[mode];
         document.documentElement.style.setProperty('--cyan', sys.color);
-        document.getElementById('active-mode').innerText = mode;
+        DOM.mode.innerText = mode;
         
-        // Background update
         const vid = document.getElementById('video-bg');
         vid.src = sys.bg;
-        vid.play();
-
-        // Render Apps
+        
         const container = document.getElementById('dock-apps');
-        container.innerHTML = '';
+        container.innerHTML = ''; // Clear prior elements natively
+        
+        // Use DocumentFragment to batch DOM insertions
+        const fragment = document.createDocumentFragment();
         sys.apps.forEach(app => {
             const div = document.createElement('div');
             div.className = 'dock-item';
             div.innerText = app.n;
-            div.onclick = () => spawnWindow(app.u, app.n);
-            container.appendChild(div);
+            div.onclick = () => spawnWindow(app.u, app.n, app.id);
+            fragment.appendChild(div);
         });
+        container.appendChild(fragment);
     }
 
-    function spawnWindow(url, title) {
-        const id = 'win_' + Date.now();
+    function toggleDock() {
+        DOM.dock.classList.toggle('active');
+    }
+
+    function spawnWindow(url, title, appId = Date.now().toString()) {
+        const id = 'win_' + appId;
+        
+        // Prevent duplicate windows
+        if (document.getElementById(id)) {
+            focusWin(id);
+            return;
+        }
+
         const win = document.createElement('div');
         win.className = 'holoframe';
         win.id = id;
-        win.style.left = '100px';
-        win.style.top = '100px';
+        win.style.left = `${Math.random() * 50 + 50}px`; // Stagger window placement
+        win.style.top = `${Math.random() * 50 + 50}px`;
         
+        // Added sandbox to iframes for better security
         win.innerHTML = `
             <div class="holo-header">
                 <span class="win-title">${title}</span>
                 <div class="win-controls">
-                    <span onclick="minimizeWin('${id}')">_</span>
-                    <span class="close" onclick="closeWin('${id}')">X</span>
+                    <span onclick="minimizeWin('${id}')" title="Minimize">_</span>
+                    <span class="close" onclick="closeWin('${id}')" title="Close">X</span>
                 </div>
             </div>
-            <iframe src="${url}"></iframe>
+            <iframe src="${url}" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
         `;
 
-        document.getElementById('desktop-manager').appendChild(win);
+        DOM.desktop.appendChild(win);
         makeDraggable(win);
         focusWin(id);
     }
 
     function makeDraggable(el) {
-        let x = 0, y = 0, nx = 0, ny = 0;
+        let offsetX = 0, offsetY = 0;
         const header = el.querySelector('.holo-header');
         
-        header.onmousedown = dragStart;
-        header.ontouchstart = dragStart;
+        header.onmousedown = header.ontouchstart = dragStart;
 
         function dragStart(e) {
+            e.preventDefault(); // Prevent text selection while dragging
             focusWin(el.id);
-            nx = e.clientX || e.touches[0].clientX;
-            ny = e.clientY || e.touches[0].clientY;
-            document.onmousemove = dragging;
-            document.ontouchmove = dragging;
-            document.onmouseup = dragEnd;
-            document.ontouchend = dragEnd;
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+            
+            offsetX = clientX - el.offsetLeft;
+            offsetY = clientY - el.offsetTop;
+            
+            isDragging = true;
+            document.onmousemove = document.ontouchmove = dragging;
+            document.onmouseup = document.ontouchend = dragEnd;
         }
 
         function dragging(e) {
-            const cx = e.clientX || e.touches[0].clientX;
-            const cy = e.clientY || e.touches[0].clientY;
-            x = nx - cx;
-            y = ny - cy;
-            nx = cx;
-            ny = cy;
-
-            let finalTop = el.offsetTop - y;
-            let finalLeft = el.offsetLeft - x;
-
-            // Dock Interaction
-            if (nx > window.innerWidth - 100) {
-                document.getElementById('side-dock').classList.add('active');
-            } else {
-                document.getElementById('side-dock').classList.remove('active');
-            }
-
-            // Screen Snapping
-            document.getElementById('snap-L').classList.toggle('snap-active', finalLeft < 20);
-            document.getElementById('snap-R').classList.toggle('snap-active', finalLeft + el.offsetWidth > window.innerWidth - 20);
+            if (!isDragging) return;
             
-            if (finalLeft < 10) finalLeft = 0;
-            if (finalLeft + el.offsetWidth > window.innerWidth - 10) finalLeft = window.innerWidth - el.offsetWidth;
+            // Use requestAnimationFrame to prevent layout thrashing
+            if (dragFrame) cancelAnimationFrame(dragFrame);
+            
+            dragFrame = requestAnimationFrame(() => {
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                if (!clientX || !clientY) return;
 
-            el.style.top = finalTop + "px";
-            el.style.left = finalLeft + "px";
+                let finalLeft = clientX - offsetX;
+                let finalTop = clientY - offsetY;
+
+                // Dock proximity detection optimized
+                DOM.dock.classList.toggle('active', clientX > window.innerWidth - 100);
+
+                // Boundary & Snapping logic
+                const ww = window.innerWidth;
+                const winW = el.offsetWidth;
+                
+                DOM.snapL.classList.toggle('snap-active', finalLeft < 20);
+                DOM.snapR.classList.toggle('snap-active', finalLeft + winW > ww - 20);
+                
+                if (finalLeft < 10) finalLeft = 0;
+                if (finalLeft + winW > ww - 10) finalLeft = ww - winW;
+                if (finalTop < 0) finalTop = 0;
+
+                el.style.left = finalLeft + "px";
+                el.style.top = finalTop + "px";
+            });
         }
 
         function dragEnd() {
-            document.onmousemove = null;
-            document.ontouchmove = null;
-            document.querySelectorAll('.snap-line').forEach(l => l.classList.remove('snap-active'));
+            isDragging = false;
+            document.onmousemove = document.ontouchmove = document.onmouseup = document.ontouchend = null;
+            if (dragFrame) cancelAnimationFrame(dragFrame);
+            DOM.snapL.classList.remove('snap-active');
+            DOM.snapR.classList.remove('snap-active');
         }
     }
 
@@ -223,11 +297,17 @@
     }
 
     function closeWin(id) {
-        document.getElementById(id).remove();
+        const win = document.getElementById(id);
+        if (win) {
+            win.remove();
+            activeThreads.delete(id);
+        }
     }
 
     function minimizeWin(id) {
         const win = document.getElementById(id);
+        if (!win) return;
+        
         const title = win.querySelector('.win-title').innerText;
         const url = win.querySelector('iframe').src;
         
@@ -236,12 +316,14 @@
         task.style.borderLeft = "2px solid var(--cyan)";
         task.innerText = "RUNNING: " + title;
         task.onclick = () => {
-            spawnWindow(url, title);
+            spawnWindow(url, title, id.replace('win_', ''));
             task.remove();
+            activeThreads.delete(id);
         };
         
-        document.getElementById('minimized-tasks').appendChild(task);
+        DOM.tasks.appendChild(task);
         win.remove();
+        activeThreads.set(id, { url, title }); // Track in state memory
     }
 </script>
 </body>
