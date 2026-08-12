@@ -4,6 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NOVA • APEX HERITAGE</title>
+    
+    <!-- OMEGA MIND TELEMETRY UPLINK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      (function() {
+        const SUPABASE_URL = 'https://amulgdbdvxpikpmldyoq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtdWxnZGJkdnhwaWtwbWxkeW9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0MDU3MzgsImV4cCI6MjEwMTk4MTczOH0.0eZ3SfWhUEzSLpDDKEE_3vp5siXF00akRp5jX1dM-dA';
+        
+        // Auto-detect repository name or fallback to domain
+        const REPO_NAME = window.OMEGA_REPO_NAME || window.location.hostname || 'Unknown-Node';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let clientIP = 'Detecting...';
+
+        // 1. Fetch Client IP
+        fetch('https://api.ipify.org?format=json')
+          .then(res => res.json())
+          .then(data => { clientIP = data.ip; })
+          .catch(() => { clientIP = 'IP_UNKNOWN'; });
+
+        // 2. Core Telemetry Logging Function
+        window.logBrainAction = async function(actionType, details = {}) {
+          try {
+            await supabase.from('central_telemetry').insert([{
+              repository_name: REPO_NAME,
+              action_type: actionType,
+              details: {
+                ...details,
+                ip_address: clientIP,
+                url: window.location.href,
+                user_agent: navigator.userAgent,
+                timestamp: new Date().toISOString()
+              }
+            }]);
+          } catch (err) {
+            console.error('[Brain Uplink Failed]:', err);
+          }
+        };
+
+        // 3. Register Node into Target Vector Dropdown
+        async function registerNode() {
+          try {
+            await supabase.from('connected_repos').upsert(
+              { repo_name: REPO_NAME, status: 'active' },
+              { onConflict: 'repo_name' }
+            );
+          } catch (e) {}
+        }
+
+        // 4. Auto-Log Page Load
+        window.addEventListener('load', () => {
+          registerNode();
+          window.logBrainAction('page_load', { title: document.title });
+        });
+
+        // 5. Auto-Log User Interactions & Clicks
+        document.addEventListener('click', (e) => {
+          const target = e.target.closest('button, a, input[type="submit"], select');
+          if (target) {
+            window.logBrainAction('user_click', {
+              element: target.tagName,
+              id: target.id || null,
+              class: target.className || null,
+              text: target.innerText ? target.innerText.substring(0, 50) : null
+            });
+          }
+        }, true);
+      })();
+    </script>
+
     <style>
         :root { 
             --cyan: #00f2ff; 
@@ -326,5 +396,44 @@
         activeThreads.set(id, { url, title }); // Track in state memory
     }
 </script>
+
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const trackingUrl = 'https://ezfwzqxwafvdjtwnmyrx.supabase.co';
+    const trackingKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6Znd6cXh3YWZ2ZGp0d25teXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwOTA2NzIsImV4cCI6MjA5NzY2NjY3Mn0.baxnDWZ9rSZobzqnAOND7SuJpXbl4wmRyUYTQl4whPE';
+    const trackingClient = createClient(trackingUrl, trackingKey);
+
+    function getSafeVisitorId() {
+        let id = localStorage.getItem('nexus_visitor_id');
+        if (!id) {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                id = crypto.randomUUID();
+            } else {
+                id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+            localStorage.setItem('nexus_visitor_id', id);
+        }
+        return id;
+    }
+
+    async function silentUplink() {
+        try {
+            const visitorId = getSafeVisitorId();
+            await trackingClient.rpc('track_ping', { p_ip_hash: visitorId });
+            console.log("Nova Node: Telemetry uplink successful.");
+        } catch (error) {
+            console.error("Nova Node Telemetry Error:", error);
+        }
+    }
+
+    window.addEventListener('load', () => {
+        silentUplink();
+        setInterval(silentUplink, 60000); 
+    });
+</script>
+
 </body>
 </html>
